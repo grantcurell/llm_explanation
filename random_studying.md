@@ -218,3 +218,4 @@ While processing a word, Attention enables the model to focus on other words in 
 - https://arxiv.org/pdf/2001.08361.pdf
 - [Transformers Explained Visually Part 1: Overview of Functionality](https://towardsdatascience.com/transformers-explained-visually-part-1-overview-of-functionality-95a6dd460452)
 - [Transformers Explained Visually (Part 2): How it works, step-by-step](https://towardsdatascience.com/transformers-explained-visually-part-2-how-it-works-step-by-step-b49fa4a64f34)
+- [](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf)
