@@ -499,28 +499,120 @@ $$
 When you multiply the above matrices, you get:
 
 $$
-Q = 
-\begin{pmatrix}
-2.5 & 1.2 & 0.1 & 2.3 \\
--0.2 + \sin\left(\frac{1}{10000^0}\right) + \cos\left(\frac{1}{10000^{2.5}}\right) & 0.4 + \cos\left(\frac{1}{10000^{0.5}}\right) + \sin\left(\frac{1}{10000^2}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.5 + \sin\left(\frac{1}{10000^0}\right) + \cos\left(\frac{1}{10000^{2.5}}\right) \\
-0.5 + \sin\left(\frac{2}{10000^0}\right) + \cos\left(\frac{2}{10000^{2.5}}\right) & -0.1 + \cos\left(\frac{2}{10000^{0.5}}\right) + \sin\left(\frac{2}{10000^2}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.5 + \sin\left(\frac{2}{10000^0}\right) + \cos\left(\frac{2}{10000^{2.5}}\right)
-\end{pmatrix}
-$$
-
-This finally gets you a matrix that looks like:
-
-$$
 Q=\begin{pmatrix}
-2.5 & 1.2 & 0.1 & 2.3 \\
-1.6414 & 1.3999 & 0.1 & 1.3414 \\
-2.4092 & 0.8998 & 0.2 & 2.4092
+1.5 & 1.1 & 2.6 & 0 \\
+1.3415 & 1.6 & 2.3 & 0.6415 \\
+2.4093 & 0.8998 & 1.7998 & 1.5093
 \end{pmatrix}
 $$
 
 
 If your matrix multiplication is rusty see [the matrix math behind this calculation](#matrix-multiplication).
 
-TODO = Continue to compute the matrices `K` and `V` in the same manner.
+We compute the $K$ matrix using our input matrix $X + PE_{\text{input}}$ and the $W_K$ matrix:
+
+$$
+K = (X + PE_{\text{input}}) \times W_K
+$$
+
+Given:
+
+$$
+X + PE_{\text{input}} = 
+\begin{pmatrix}
+0.1 & 1.2 & -0.1 & 1.4 \\
+-0.3 + \sin(\frac{1}{10000^0}) & 0.5 + \cos(\frac{1}{10000^0.5}) & 0.1 + \sin(\frac{1}{10000^2}) & -0.2 + \cos(\frac{1}{10000^2.5}) \\
+0.4 + \sin(\frac{2}{10000^0}) & -0.3 + \cos(\frac{2}{10000^0.5}) & 0.2 + \sin(\frac{2}{10000^2}) & 0.1 + \cos(\frac{2}{10000^2.5})
+\end{pmatrix}
+$$
+
+$$
+W_K = 
+\begin{pmatrix} 
+0 & 1 & 1 & 0 \\ 
+1 & 0 & 0 & 1 \\ 
+1 & 0 & 1 & 0 \\ 
+0 & 1 & 0 & 1 
+\end{pmatrix} 
+$$
+
+When you multiply the above matrices, you get:
+
+$$
+K=\begin{pmatrix}
+1.1 & 1.5 & 0 & 2.6 \\
+1.6001 & 1.3415 & 0.6416 & 2.3 \\
+0.9 & 2.4093 & 1.5095 & 1.7998
+\end{pmatrix}
+$$
+
+Finally we do the math for $V$. $X + PE_{\text{input}}$ and the $W_V$ matrix:
+
+$$
+V = (X + PE_{\text{input}}) \times W_V
+$$
+
+Given:
+
+$$
+X + PE_{\text{input}} = 
+\begin{pmatrix}
+0.1 & 1.2 & -0.1 & 1.4 \\
+-0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\
+0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right)
+\end{pmatrix}
+$$
+
+$$
+W_V = 
+\begin{pmatrix} 
+0 & 0 & 1 & 1 \\ 
+1 & 1 & 0 & 0 \\ 
+0 & 1 & 0 & 1 \\ 
+1 & 0 & 1 & 0 
+\end{pmatrix} 
+$$
+
+Multiplying the matrices, we get:
+
+$$
+V=\begin{pmatrix}
+1.5 & 0 & 1.1 & 2.6 \\
+1.3415 & 0.6416 & 1.6001 & 2.3 \\
+2.4093 & 1.5095 & 0.9 & 1.7998
+\end{pmatrix}
+$$
+
+We perform the [same calculations](#calculating-y) for $Y$. Here are the results:
+
+$$
+\text{Q}=
+\begin{pmatrix}
+1 & 1 & 2 & 0 \\
+1.7415 & 1.7001 & 2.5 & 0.9416 \\
+2.7093 & 0.5 & 2.1998 & 1.0095
+\end{pmatrix}
+$$
+
+$$
+\text{K}=
+\begin{pmatrix}
+1 & 1 & 0 & 2 \\
+1.7001 & 1.7415 & 0.9416 & 2.5 \\
+0.5 & 2.7093 & 1.0095 & 2.1998
+\end{pmatrix}
+$$
+
+$$
+\text{V}=
+\begin{pmatrix}
+1 & 0 & 1 & 2 \\
+1.7415 & 0.9416 & 1.7001 & 2.5 \\
+2.7093 & 1.0095 & 0.5 & 2.1998
+\end{pmatrix}
+$$
+
+This gives us the $V$ matrix. With $Q$, $K$, and $V$ matrices in hand, you're ready to compute the attention scores and proceed with the self-attention mechanism.
 
 
 
@@ -671,51 +763,157 @@ $$
 Plug that into some Python:
 
 ```python
-import math
+import numpy as np
 
-# Initialize Q as an empty list of lists
-Q = []
+X_PE_input = np.array([
+    [0.1, 1.2, -0.1, 1.4],
+    [-0.3 + np.sin(1), 0.5 + np.cos(1/10000**0.5), 0.1 + np.sin(1/10000**2), -0.2 + np.cos(1/10000**2.5)],
+    [0.4 + np.sin(2), -0.3 + np.cos(2/10000**0.5), 0.2 + np.sin(2/10000**2), 0.1 + np.cos(2/10000**2.5)]
+])
 
-# First row of Q (given)
-Q.append([2.5, 1.2, 0.1, 2.3])
+W_Q = np.array([
+    [1, 0, 0, 1],
+    [0, 1, 1, 0],
+    [0, 1, 0, 1],
+    [1, 0, 1, 0]
+])
 
-# Second row of Q
-row2 = []
-row2.append(-0.2 + math.sin(1/10000**0) + math.cos(1/10000**2.5))
-row2.append(0.4 + math.cos(1/10000**0.5) + math.sin(1/10000**2))
-row2.append(0.1 + math.sin(1/10000**2))
-row2.append(-0.5 + math.sin(1/10000**0) + math.cos(1/10000**2.5))
-Q.append(row2)
+Q = X_PE_input.dot(W_Q)
 
-# Third row of Q
-row3 = []
-row3.append(0.5 + math.sin(2/10000**0) + math.cos(2/10000**2.5))
-row3.append(-0.1 + math.cos(2/10000**0.5) + math.sin(2/10000**2))
-row3.append(0.2 + math.sin(2/10000**2))
-row3.append(0.5 + math.sin(2/10000**0) + math.cos(2/10000**2.5))
-Q.append(row3)
-
-# Print the Q matrix with calculated values
-for row in Q:
-    print(row)
-
+print(Q)
 ```
 
 that will get you:
 
 ```
-[2.5, 1.2, 0.1, 2.3]
-[1.6414709848078965, 1.3999500104166653, 0.10000001, 1.3414709848078965]
-[2.409297426825682, 0.8998000266665778, 0.20000002, 2.409297426825682]
+[[1.5        1.1        2.6        0.        ]
+ [1.34147098 1.59995001 2.29995    0.64147099]
+ [2.40929743 0.89980003 1.79980001 1.50929745]]
 ```
 
 Printed nicely out to four decimal places:
 
 $$
 \begin{pmatrix}
-2.5 & 1.2 & 0.1 & 2.3 \\
-1.6414 & 1.3999 & 0.1 & 1.3414 \\
-2.4092 & 0.8998 & 0.2 & 2.4092
+1.5 & 1.1 & 2.6 & 0 \\
+1.3415 & 1.6 & 2.3 & 0.6415 \\
+2.4093 & 0.8998 & 1.7998 & 1.5093
 \end{pmatrix}
 $$
 
+You can get all three matrices with:
+
+```python
+import numpy as np
+
+# Input matrix
+X = np.array([
+    [0.1, 1.2, -0.1, 1.4],
+    [0.5415, 1.49995, 0.1001, 0.8],
+    [1.3093, 0.6998, 0.2002, 1.1]
+])
+
+# Weight matrices
+W_Q = np.array([
+    [1, 0, 0, 1],
+    [0, 1, 1, 0],
+    [0, 1, 0, 1],
+    [1, 0, 1, 0]
+])
+
+W_K = np.array([
+    [0, 1, 1, 0],
+    [1, 0, 0, 1],
+    [1, 0, 1, 0],
+    [0, 1, 0, 1]
+])
+
+W_V = np.array([
+    [1, 1, 0, 0],
+    [0, 0, 1, 1],
+    [0, 1, 1, 0],
+    [1, 0, 0, 1]
+])
+
+# Matrix multiplication
+Q = np.dot(X, W_Q)
+K = np.dot(X, W_K)
+V = np.dot(X, W_V)
+
+print("Q:")
+print(Q)
+print("\nK:")
+print(K)
+print("\nV:")
+print(V)
+```
+
+##### Calculating Y
+
+Calculate for $Y$:
+
+```python
+
+import numpy as np
+
+# Input matrix X
+X = np.array([
+    [0.0, 1.0, 0.0, 1.0],
+    [0.6415, 1.39995, 0.3001, 1.1],
+    [1.4093, 0.8998, -0.3998, 1.3]
+])
+
+# Weight matrices W_Q, W_K, W_V
+W_Q = np.array([
+    [1, 0, 0, 1],
+    [0, 1, 1, 0],
+    [0, 1, 0, 1],
+    [1, 0, 1, 0]
+])
+
+W_K = np.array([
+    [0, 1, 1, 0],
+    [1, 0, 0, 1],
+    [1, 0, 1, 0],
+    [0, 1, 0, 1]
+])
+
+W_V = np.array([
+    [1, 1, 0, 0],
+    [0, 0, 1, 1],
+    [0, 1, 1, 0],
+    [1, 0, 0, 1]
+])
+
+# Calculate Q, K, V matrices
+Q = np.dot(X, W_Q)
+K = np.dot(X, W_K)
+V = np.dot(X, W_V)
+
+print("Q matrix:")
+print(Q)
+
+print("K matrix:")
+print(K)
+
+print("V matrix:")
+print(V)
+
+```
+
+Output:
+
+```
+Q matrix:
+[[1.      1.      2.      0.     ]
+ [1.7415  1.70005 2.49995 0.9416 ]
+ [2.7093  0.5     2.1998  1.0095 ]]
+K matrix:
+[[1.      1.      0.      2.     ]
+ [1.70005 1.7415  0.9416  2.49995]
+ [0.5     2.7093  1.0095  2.1998 ]]
+V matrix:
+[[1.      0.      1.      2.     ]
+ [1.7415  0.9416  1.70005 2.49995]
+ [2.7093  1.0095  0.5     2.1998 ]]
+```
