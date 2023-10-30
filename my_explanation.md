@@ -23,7 +23,7 @@ We start by covering how transformers work. Transformers are the core of an LLM 
 
 The below image is an overview model learning and inference process. There are some minor differences between the two processes which I will explain below but at this level they are the same. To illustrate how LLMs work, we will use the example of asking an LLM to translate, "You are welcome" to "De Nada".
 
-![](images/2023-10-26-11-41-04.png)
+![](images/2023-10-30-16-38-47.png)
 
 [Image Source](https://towardsdatascience.com/transformers-explained-visually-part-1-overview-of-functionality-95a6dd460452)
 
@@ -614,6 +614,158 @@ $$
 
 This gives us the $V$ matrix. With $Q$, $K$, and $V$ matrices in hand, you're ready to compute the attention scores and proceed with the self-attention mechanism.
 
+Next we need to calculate the attention score with:
+
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) \times V$$
+
+I did this with [this python code](#calculate-attention-score):
+
+$$
+\text{Attention}(Q, K, V) = 
+\begin{pmatrix}
+2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 \\
+2.10729705 & 1.1957622  & 1.06288922 & 1.97442407 \\
+1.82115196 & 0.90157546 & 1.21880742 & 2.13838393
+\end{pmatrix}
+$$
+
+#### Attention Heads and Multi Attention Heads
+
+I will not do all the math here as it is an exact repeat of what we have above, but the actual models will use multiple attention heads. Each attention head "pays attention" to different parts of the sentence. The goal being to avoid a few tokens (words) having an outsized impact on the output. We want to pay attention to the totality of the sentence.
+
+Consider a sentence like "Jane, who recently graduated from Harvard, is starting her new job at Google." In this sentence, the words "Harvard" and "Google" are likely to have high attention scores because they are proper nouns and often important in text. 
+
+- **Single-Head Attention**: If you're using single-head attention to find out where Jane is starting her job, the model might give high attention to both "Harvard" and "Google". This could be misleading because the word "Harvard" isn't relevant to the query about Jane's new job, even though it's generally an important token.
+- **Multi-Head Attention**: In contrast, one head could focus on "Jane" and "job," while another head could focus on "Harvard" and "Google," and yet another head could focus on "recently graduated" and "starting." This way, the model can capture both the important context provided by "Harvard" and the fact that "Google" is where she is starting her new job, without letting the importance of "Harvard" overshadow the relevance of "Google" to the query.
+
+Returning to [Troy Wang's paper](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=12):
+
+> One problem of the self-attention layer is that by only using a single set of trained matrices \( Q, K, \) and \( V \), the self-attention could be dominated by just one or a few tokens, and thereby not being able to pay attention to multiple places that might be meaningful. Therefore, by using multi-heads, we aim to linearly combine the results of many independent self-attention computations, and thereby expand the self-attention layer's ability to focus on different positions \[VSP+17\] \[Alammar18\].
+>
+> More concretely, we use multiple sets of mutually independent \( (Q), (K), \) and \( (V) \) matrices, each being randomly initialized and independently trained. With multiple \( (Q), (K), \) and \( (V) \) matrices, we end up with multiple resulting vectors for every input token vector. Nonetheless, the feedforward neural network in the next step is designed to only accept one vector per word input. In order to combine those vectors, we concatenate them into a single vector and then multiply it with another weight vector which is trained simultaneously.
+>
+> Formally, this multi-head attention is defined as 
+>
+> $$
+> MultiHead(Q, K, V) = Concat(head_1, ..., head_h) W_O
+> $$
+> where $head_i = Attention(Q W_i^Q, K W_i^K, V W_i^V)$
+
+What this would actually look like. Here we just make up some matrix and assume that it is the output from head 2; it would have been generated exactly as we did the output from the first head.
+
+1. **Compute for Head 2**:  
+   First, let's assume the output of the second attention head (`head_2`) is:
+   $$
+   \text{Attention}_2(Q, K, V) = 
+   \begin{pmatrix}
+   1.5 & 0.8 & 1.2 & 2.0 \\
+   1.6 & 0.9 & 1.1 & 2.1 \\
+   1.4 & 0.7 & 1.3 & 1.9
+   \end{pmatrix}
+   $$
+
+2. **Concatenate Outputs**:  
+   Now, we concatenate the outputs of `head_1` and `head_2`:
+   $$
+   \text{Concat}(\text{Attention}_1, \text{Attention}_2) = 
+   \begin{pmatrix}
+   2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 & 1.5 & 0.8 & 1.2 & 2.0 \\
+   2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 & 1.6 & 0.9 & 1.1 & 2.1 \\
+   1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 & 1.4 & 0.7 & 1.3 & 1.9
+   \end{pmatrix}
+   $$
+
+3. **Final Linear Projection**:  
+   Finally, we multiply the concatenated matrix with a learned projection matrix $W_O$. For the sake of simplicity in this example, let's assume $W_O$ is an 8x4 matrix filled with 0.5. In a real-world scenario, this matrix would have learned values.
+
+I generated random values for $W_O$ but in reality this would start random and the model would train these values over time.
+
+$$
+W_O = 
+\begin{pmatrix}
+0.37738326 & 0.83274845 & 0.37280978 & 0.14584743 \\
+0.28706851 & 0.29072609 & 0.69116998 & 0.20106682 \\
+0.26764653 & 0.12058646 & 0.82634382 & 0.60818759 \\
+0.44329703 & 0.4425581  & 0.89811744 & 0.24551412 \\
+0.9186323  & 0.40029736 & 0.17636762 & 0.06896409 \\
+0.41921272 & 0.0495383  & 0.77792527 & 0.4354529  \\
+0.14791365 & 0.66822966 & 0.48313699 & 0.94127396 \\
+0.11604641 & 0.51794357 & 0.62942357 & 0.76420883
+\end{pmatrix}
+$$
+
+Multiply the two together:
+
+The final multi-head attention output will be:
+$$
+\text{Concat}(\text{Attention}_1, \text{Attention}_2)\times W_{O}=
+\text{MultiHead}(Q,K,V)=
+\begin{pmatrix}
+4.42554033 & 5.589241 & 6.99844643 & 4.79288192 \\
+4.55176485 & 5.6122494 & 7.09923364 & 4.82144704 \\
+4.21254506 & 5.31988824 & 6.84520426 & 4.79017392
+\end{pmatrix}
+$$
+
+I don't want to get too into the weeds on this, but it is worth making a brief note on why this is better than RNN. The short version is it's faster. For starters, all the calculations for each attention head can run in parallel completely independently.
+
+The other great part is that the calculation is independent of input length. You could feed in 1000 words or 500 and the attention calculation runs at the same speed.
+
+
+#### Layer Normalization
+
+As the model trains itself, problems frequently arise. For example:
+
+Without layer normalization, the model could suffer from issues related to the internal covariate shift. Here's a simple example:
+
+Let's say we have a neural network for binary classification and a layer that takes two features $x_1$ and $x_2$ as input. Initially, $x_1$ and $x_2$ are both in the range of [0, 1].
+
+1. **First Epoch**: The model learns some weights and biases based on $x_1$ and $x_2$.
+2. **Second Epoch**: We add new features, or the features themselves change distribution, such that $x_1$ is now in the range of [0, 1000] while $x_2$ remains in [0, 1].
+
+Without layer normalization, this change in feature scale will make the previously learned weights and biases less useful, and the model may need a lot of time to adjust to this new scale. It might even diverge and fail to train.
+
+In contrast, if we use layer normalization, the inputs are rescaled to have zero mean and unit variance, making it easier for the model to adapt to the new data distribution. Layer normalization keeps the scales consistent, making training more stable.
+
+After layer normalization is applied the results won't be restricted to a specific range like [0, 1] or [-1, 1] as in the case of some other normalization techniques. Instead, layer normalization will center the data around zero and will scale based on the standard deviation, but there's no hard constraint on the range of the output values.
+
+However, after layer normalization, the mean of each row (or each example, in the context of a neural network) will be approximately 0, and the standard deviation will be approximately 1. The actual values can be positive or negative and can exceed the range of [-1, 1], depending on the original data and its distribution.
+
+Layer normalization is applied to each data point within a given example, rather than across examples in the dataset (which is what batch normalization does). 
+
+Given matrix $M$:
+
+$$
+M = 
+\begin{pmatrix}
+4.42554033 & 5.589241   & 6.99844643 & 4.79288192 \\
+4.55176485 & 5.6122494  & 7.09923364 & 4.82144704 \\
+4.21254506 & 5.31988824 & 6.84520426 & 4.79017392
+\end{pmatrix}
+$$
+
+The layer normalization for each row (example) in $M$ is calculated as:
+
+$$
+\text{LN}(x_i) = \gamma \times \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta
+$$
+
+- $x_i$ is the input vector (a row in $M$ in our case).
+- $\mu$ is the mean of $x_i$.
+- $\sigma^2$ is the variance of $x_i$.
+- $\gamma$ and $\beta$ are learnable parameters, which can be set to 1 and 0 respectively for simplification.
+- $\epsilon$ is a small constant added for numerical stability (can be set to $1e-6$ or similar).
+
+I don't show the breakdown of applying the formula here but what really matters is understanding what the formula does. See [this python code](#calculate-layer-normalization) for how I got the results.
+
+$$
+\text{LN}(x_i)=
+\begin{pmatrix}
+-1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\
+-0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\
+-1.10306273 & 0.02854757 & 1.58729045 & -0.51277529
+\end{pmatrix}
+$$
 
 
 ### Prepare and Embed Target Sequence for Decoder
@@ -631,7 +783,7 @@ The first question(s) I asked when I saw these matrices is, "Where do these valu
 
 The article [Large language models, explained with a minimum of math and jargon](https://www.understandingai.org/p/large-language-models-explained-with) does a fantastic job of answering this in a non-mathematical way. The goal here is that we want to describe mathematically the relationship between some given word and other words because this will then allow us to more accurately predict what words should go in the answers our LLM produces. Words that are similar should have similar vector values. This concept was pioneered at Google in [a paper called Word2vec](https://en.wikipedia.org/wiki/Word2vec). You can see this visually at [this website](http://vectors.nlpl.eu/explore/embeddings/en/MOD_enwiki_upos_skipgram_300_2_2021/airplane_NOUN/). For example, I wanted to see what airplanes are likely to be related to airplanes:
 
-![](images/2023-10-26-12-54-59.png)
+![](images/2023-10-30-16-40-48.png)
 
 The percentage similarity to "airplane":
 
@@ -848,6 +1000,26 @@ print("\nV:")
 print(V)
 ```
 
+Output
+
+```
+Q:
+[[1.5     1.1     2.6     0.     ]
+ [1.3415  1.60005 2.29995 0.6416 ]
+ [2.4093  0.9     1.7998  1.5095 ]]
+
+K:
+[[1.1     1.5     0.      2.6    ]
+ [1.60005 1.3415  0.6416  2.29995]
+ [0.9     2.4093  1.5095  1.7998 ]]
+
+V:
+[[1.5     0.      1.1     2.6    ]
+ [1.3415  0.6416  1.60005 2.29995]
+ [2.4093  1.5095  0.9     1.7998 ]]
+>
+```
+
 ##### Calculating Y
 
 Calculate for $Y$:
@@ -916,4 +1088,137 @@ V matrix:
 [[1.      0.      1.      2.     ]
  [1.7415  0.9416  1.70005 2.49995]
  [2.7093  1.0095  0.5     2.1998 ]]
+```
+
+#### Calculate Attention Score
+
+```python
+import numpy as np
+from scipy.special import softmax
+
+
+def attention(Q, K, V):
+    d_k = Q.shape[-1]
+    matmul_qk = np.dot(Q, K.T)
+
+    # Scale the matrix multiplication
+    scaled_attention_logits = matmul_qk / np.sqrt(d_k)
+
+    # Apply softmax
+    attention_weights = softmax(scaled_attention_logits, axis=-1)
+
+    # Multiply by the Value matrix
+    output = np.dot(attention_weights, V)
+
+    return output
+
+
+# Given matrices
+Q = np.array([[1.5, 1.1, 2.6, 0.],
+              [1.3415, 1.60005, 2.29995, 0.6416],
+              [2.4093, 0.9, 1.7998, 1.5095]])
+
+K = np.array([[1.1, 1.5, 0., 2.6],
+              [1.60005, 1.3415, 0.6416, 2.29995],
+              [0.9, 2.4093, 1.5095, 1.7998]])
+
+V = np.array([[1.5, 0., 1.1, 2.6],
+              [1.3415, 0.6416, 1.60005, 2.29995],
+              [2.4093, 1.5095, 0.9, 1.7998]])
+
+result = attention(Q, K, V)
+print("Attention(Q, K, V) = ")
+print(result)
+
+```
+
+Output:
+
+```
+Attention(Q, K, V) = 
+[[2.11372594 1.21488963 1.06582258 1.96465889]
+ [2.10729705 1.1957622  1.06288922 1.97442407]
+ [1.82115196 0.90157546 1.21880742 2.13838393]]
+```
+
+#### Calculate Multi-Attention Head Output
+
+```python
+import numpy as np
+
+# Given attention outputs
+Attention1 = np.array([
+    [2.11372594, 1.21488963, 1.06582258, 1.96465889],
+    [2.10729705, 1.1957622, 1.06288922, 1.97442407],
+    [1.82115196, 0.90157546, 1.21880742, 2.13838393]
+])
+
+Attention2 = np.array([
+    [1.5, 0.8, 1.2, 2.0],
+    [1.6, 0.9, 1.1, 2.1],
+    [1.4, 0.7, 1.3, 1.9]
+])
+
+# Concatenate the attention outputs
+concat_attention = np.concatenate([Attention1, Attention2], axis=1)
+
+# Given W_O matrix
+W_O = np.array([
+    [0.37738326, 0.83274845, 0.37280978, 0.14584743],
+    [0.28706851, 0.29072609, 0.69116998, 0.20106682],
+    [0.26764653, 0.12058646, 0.82634382, 0.60818759],
+    [0.44329703, 0.4425581,  0.89811744, 0.24551412],
+    [0.9186323,  0.40029736, 0.17636762, 0.06896409],
+    [0.41921272, 0.0495383,  0.77792527, 0.4354529 ],
+    [0.14791365, 0.66822966, 0.48313699, 0.94127396],
+    [0.11604641, 0.51794357, 0.62942357, 0.76420883]
+])
+
+# Multiply concatenated output with W_O
+multihead_output = concat_attention.dot(W_O)
+
+print(multihead_output)
+
+```
+
+Output:
+
+```
+[[4.42554033 5.589241   6.99844643 4.79288192]
+ [4.55176485 5.6122494  7.09923364 4.82144704]
+ [4.21254506 5.31988824 6.84520426 4.79017392]]
+```
+
+#### Calculate Layer Normalization
+
+```python
+import numpy as np
+
+# Define matrix M
+M = np.array([
+    [4.42554033, 5.589241, 6.99844643, 4.79288192],
+    [4.55176485, 5.6122494, 7.09923364, 4.82144704],
+    [4.21254506, 5.31988824, 6.84520426, 4.79017392]
+])
+
+# Initialize epsilon for numerical stability
+epsilon = 1e-6
+
+# Calculate mean and variance for each row
+mean = np.mean(M, axis=1, keepdims=True)
+variance = np.var(M, axis=1, keepdims=True)
+
+# Compute layer normalization
+LN_M = (M - mean) / np.sqrt(variance + epsilon)
+
+print(LN_M)
+
+```
+
+Output:
+
+```
+[[-1.03927142  0.13949668  1.56694829 -0.66717355]
+ [-0.97825977  0.09190721  1.59246789 -0.70611533]
+ [-1.10306273  0.02854757  1.58729045 -0.51277529]]
 ```
