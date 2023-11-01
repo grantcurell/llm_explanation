@@ -598,15 +598,7 @@ Multiply the two together:
 
 The final multi-head attention output will be:
 
-$$
-\text{Concat}(\text{Attention}_1, \text{Attention}_2)\times W_{O}=
-\text{MultiHead}(Q,K,V)=
-\begin{pmatrix}
-4.42554033 & 5.589241 & 6.99844643 & 4.79288192 \\\\
-4.55176485 & 5.6122494 & 7.09923364 & 4.82144704 \\\\
-4.21254506 & 5.31988824 & 6.84520426 & 4.79017392
-\end{pmatrix}
-$$
+$$ \text{Concat}(\text{Attention}_1, \text{Attention}_2) = \begin{pmatrix} 2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 & 1.5 & 0.8 & 1.2 & 2.0 \\\ 2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 & 1.6 & 0.9 & 1.1 & 2.1 \\\ 1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 & 1.4 & 0.7 & 1.3 & 1.9 \end{pmatrix} $$
 
 I don't want to get too into the weeds on this, but it is worth making a brief note on why this is better than RNN. The short version is it's faster. For starters, all the calculations for each attention head can run in parallel completely independently.
 
