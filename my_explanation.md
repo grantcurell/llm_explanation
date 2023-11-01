@@ -389,15 +389,15 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}
 Given the above steps for calculating self-attention, let's break it down:
 1. **Create Query (Q), Key (K), and Value (V) Matrices**: We obtain these by multiplying the input embeddings (with position encodings) with the weight matrices $W_Q$, $W_K$, and $W_V$ respectively. 
   For the sake of this example, we will assume these weight matrices are:
-  $$
-  W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \end{pmatrix}
-  $$
-  $$
-  W_K = \begin{pmatrix} 0 & 1 & 1 & 0 \\\\ 1 & 0 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \end{pmatrix}
-  $$
-  $$
-  W_V = \begin{pmatrix} 1 & 1 & 0 & 0 \\\\ 0 & 0 & 1 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 1 & 0 & 0 & 1 \end{pmatrix}
-  $$
+$$
+W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \end{pmatrix}
+$$
+$$
+W_K = \begin{pmatrix} 0 & 1 & 1 & 0 \\\\ 1 & 0 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \end{pmatrix}
+$$
+$$
+W_V = \begin{pmatrix} 1 & 1 & 0 & 0 \\\\ 0 & 0 & 1 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 1 & 0 & 0 & 1 \end{pmatrix}
+$$
 2. **Compute Q, K, and V**: Multiply the input matrix $X$ with these weights:
   $$
   Q = X \times W_Q
@@ -426,25 +426,13 @@ Let's calculate the matrices Q, K, V, Score, SoftmaxScore, and AttentionOutput:
 To begin, we will compute the $Q$, $K$, and $V$ matrices.
 
 Using:
-$$
-X + PE_{\text{input}} = 
-\begin{pmatrix}
-0.1 & 1.2 & -0.1 & 1.4 \\\\
--0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\\
-0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right)
-\end{pmatrix}
-$$
+$$ X + PE_{\text{input}} = \begin{pmatrix} 0.1 & 1.2 & -0.1 & 1.4 \\\ -0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\ 0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} $$
 
 Given the weight matrices:
-$$
-W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \end{pmatrix}
-$$
-$$
-W_K = \begin{pmatrix} 0 & 1 & 1 & 0 \\\\ 1 & 0 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \end{pmatrix}
-$$
-$$
-W_V = \begin{pmatrix} 1 & 1 & 0 & 0 \\\\ 0 & 0 & 1 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 1 & 0 & 0 & 1 \end{pmatrix}
-$$
+
+$$ W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\ 0 & 1 & 1 & 0 \\\ 0 & 1 & 0 & 1 \\\ 1 & 0 & 1 & 0 \end{pmatrix} $$
+$$ W_K = \begin{pmatrix} 0 & 1 & 1 & 0 \\\ 1 & 0 & 0 & 1 \\\ 1 & 0 & 1 & 0 \\\ 0 & 1 & 0 & 1 \end{pmatrix} $$
+$$ W_V = \begin{pmatrix} 1 & 1 & 0 & 0 \\\ 0 & 0 & 1 & 1 \\\ 0 & 1 & 1 & 0 \\\ 1 & 0 & 0 & 1 \end{pmatrix} $$
 
 1. Compute $Q$:
   $$
@@ -505,63 +493,19 @@ $$
 
 Given:
 
-$$
-X + PE_{\text{input}} = 
-\begin{pmatrix}
-0.1 & 1.2 & -0.1 & 1.4 \\\\
--0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\\
-0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right)
-\end{pmatrix}
-$$
+$$ X + PE_{\text{input}} = \begin{pmatrix} 0.1 & 1.2 & -0.1 & 1.4 \\\ -0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\ 0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} $$
 
-$$
-W_V = 
-\begin{pmatrix} 
-0 & 0 & 1 & 1 \\\\ 
-1 & 1 & 0 & 0 \\\\ 
-0 & 1 & 0 & 1 \\\\ 
-1 & 0 & 1 & 0 
-\end{pmatrix} 
-$$
+$$ W_V = \begin{pmatrix} 0 & 0 & 1 & 1 \\\ 1 & 1 & 0 & 0 \\\ 0 & 1 & 0 & 1 \\\ 1 & 0 & 1 & 0 \end{pmatrix} $$
 
 Multiplying the matrices, we get:
 
-$$
-V=\begin{pmatrix}
-1.5 & 0 & 1.1 & 2.6 \\\\
-1.3415 & 0.6416 & 1.6001 & 2.3 \\\\
-2.4093 & 1.5095 & 0.9 & 1.7998
-\end{pmatrix}
-$$
+$$ V = \begin{pmatrix} 1.5 & 0 & 1.1 & 2.6 \\\ 1.3415 & 0.6416 & 1.6001 & 2.3 \\\ 2.4093 & 1.5095 & 0.9 & 1.7998 \end{pmatrix} $$
 
 We perform the [same calculations](#calculating-y) for $Y$. Here are the results:
 
-$$
-\text{Q}=
-\begin{pmatrix}
-1 & 1 & 2 & 0 \\\\
-1.7415 & 1.7001 & 2.5 & 0.9416 \\\\
-2.7093 & 0.5 & 2.1998 & 1.0095
-\end{pmatrix}
-$$
-
-$$
-\text{K}=
-\begin{pmatrix}
-1 & 1 & 0 & 2 \\\\
-1.7001 & 1.7415 & 0.9416 & 2.5 \\\\
-0.5 & 2.7093 & 1.0095 & 2.1998
-\end{pmatrix}
-$$
-
-$$
-\text{V}=
-\begin{pmatrix}
-1 & 0 & 1 & 2 \\\\
-1.7415 & 0.9416 & 1.7001 & 2.5 \\\\
-2.7093 & 1.0095 & 0.5 & 2.1998
-\end{pmatrix}
-$$
+$$ \text{Q} = \begin{pmatrix} 1 & 1 & 2 & 0 \\\ 1.7415 & 1.7001 & 2.5 & 0.9416 \\\ 2.7093 & 0.5 & 2.1998 & 1.0095 \end{pmatrix} $$
+$$ \text{K} = \begin{pmatrix} 1 & 1 & 0 & 2 \\\ 1.7001 & 1.7415 & 0.9416 & 2.5 \\\ 0.5 & 2.7093 & 1.0095 & 2.1998 \end{pmatrix} $$
+$$ \text{V} = \begin{pmatrix} 1 & 0 & 1 & 2 \\\ 1.7415 & 0.9416 & 1.7001 & 2.5 \\\ 2.7093 & 1.0095 & 0.5 & 2.1998 \end{pmatrix} $$
 
 This gives us the $V$ matrix. With $Q$, $K$, and $V$ matrices in hand, you're ready to compute the attention scores and proceed with the self-attention mechanism.
 
@@ -571,14 +515,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}
 
 I did this with [this python code](#calculate-attention-score):
 
-$$
-\text{Attention}(Q, K, V) = 
-\begin{pmatrix}
-2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 \\\\
-2.10729705 & 1.1957622  & 1.06288922 & 1.97442407 \\\\
-1.82115196 & 0.90157546 & 1.21880742 & 2.13838393
-\end{pmatrix}
-$$
+$$ \text{Attention}(Q, K, V) = \begin{pmatrix} 2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 \\\ 2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 \\\ 1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 \end{pmatrix} $$
 
 #### Attention Heads and Multi Attention Heads
 
@@ -606,25 +543,25 @@ What this would actually look like. Here we just make up some matrix and assume 
 
 1. **Compute for Head 2**:  
    First, let's assume the output of the second attention head (`head_2`) is:
-   $$
-   \text{Attention}_2(Q, K, V) = 
-   \begin{pmatrix}
-   1.5 & 0.8 & 1.2 & 2.0 \\\\
-   1.6 & 0.9 & 1.1 & 2.1 \\\\
-   1.4 & 0.7 & 1.3 & 1.9
-   \end{pmatrix}
-   $$
+$$
+\text{Attention}_2(Q, K, V) = 
+\begin{pmatrix}
+1.5 & 0.8 & 1.2 & 2.0 \\\\
+1.6 & 0.9 & 1.1 & 2.1 \\\\
+1.4 & 0.7 & 1.3 & 1.9
+\end{pmatrix}
+$$
 
 2. **Concatenate Outputs**:  
    Now, we concatenate the outputs of `head_1` and `head_2`:
-   $$
-   \text{Concat}(\text{Attention}_1, \text{Attention}_2) = 
-   \begin{pmatrix}
-   2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 & 1.5 & 0.8 & 1.2 & 2.0 \\\\
-   2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 & 1.6 & 0.9 & 1.1 & 2.1 \\\\
-   1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 & 1.4 & 0.7 & 1.3 & 1.9
-   \end{pmatrix}
-   $$
+$$
+\text{Concat}(\text{Attention}_1, \text{Attention}_2) = 
+\begin{pmatrix}
+2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 & 1.5 & 0.8 & 1.2 & 2.0 \\\\
+2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 & 1.6 & 0.9 & 1.1 & 2.1 \\\\
+1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 & 1.4 & 0.7 & 1.3 & 1.9
+\end{pmatrix}
+$$
 
 3. **Final Linear Projection**:  
    Finally, we multiply the concatenated matrix with a learned projection matrix $W_O$. For the sake of simplicity in this example, let's assume $W_O$ is an 8x4 matrix filled with 0.5. In a real-world scenario, this matrix would have learned values.
