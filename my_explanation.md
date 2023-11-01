@@ -346,9 +346,11 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}
 
 8. **The Attention Output**:
     - The equation one last time:
-    $$
-    \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) \times V
-    $$
+
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) \times V
+$$
+
     - This formula captures the essence of the self-attention mechanism. The product of Q and $K^T$ gives attention scores, which after scaling and softmax, are used to weigh the V values.
 
 ##### A Concrete Example
@@ -522,6 +524,7 @@ Returning to [Troy Wang's paper](https://www.cis.upenn.edu/wp-content/uploads/20
 > $$
 > MultiHead(Q, K, V) = Concat(head_1, ..., head_h) W_O
 > $$
+> 
 > where $head_i = Attention(Q W_i^Q, K W_i^K, V W_i^V)$
 
 What this would actually look like. Here we just make up some matrix and assume that it is the output from head 2; it would have been generated exactly as we did the output from the first head.
