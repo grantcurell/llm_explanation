@@ -617,14 +617,7 @@ Layer normalization is applied to each data point within a given example, rather
 
 Given matrix $M$:
 
-$$
-M = 
-\begin{pmatrix}
-4.42554033 & 5.589241   & 6.99844643 & 4.79288192 \\\\
-4.55176485 & 5.6122494  & 7.09923364 & 4.82144704 \\\\
-4.21254506 & 5.31988824 & 6.84520426 & 4.79017392
-\end{pmatrix}
-$$
+$$ M = \begin{pmatrix} 4.42554033 & 5.589241 & 6.99844643 & 4.79288192 \\\ 4.55176485 & 5.6122494 & 7.09923364 & 4.82144704 \\\ 4.21254506 & 5.31988824 & 6.84520426 & 4.79017392 \end{pmatrix} $$
 
 The layer normalization for each row (example) in $M$ is calculated as:
 
@@ -640,14 +633,7 @@ $$
 
 I don't show the breakdown of applying the formula here but what really matters is understanding what the formula does. See [this python code](#calculate-layer-normalization) for how I got the results.
 
-$$
-\text{LN}(x_i)=
-\begin{pmatrix}
--1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\\\
--0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\\\
--1.10306273 & 0.02854757 & 1.58729045 & -0.51277529
-\end{pmatrix}
-$$
+$$ \text{LN}(x_i) = \begin{pmatrix} -1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\\ -0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\\ -1.10306273 & 0.02854757 & 1.58729045 & -0.51277529 \end{pmatrix} $$
 
 #### Feed Forward Neural Net
 
