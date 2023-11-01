@@ -597,6 +597,7 @@ $$
 Multiply the two together:
 
 The final multi-head attention output will be:
+
 $$
 \text{Concat}(\text{Attention}_1, \text{Attention}_2)\times W_{O}=
 \text{MultiHead}(Q,K,V)=
