@@ -454,19 +454,22 @@ $$ W_K = \begin{pmatrix} 0 & 1 & 1 & 0 \\\ 1 & 0 & 0 & 1 \\\ 1 & 0 & 1 & 0 \\\ 0
 $$ W_V = \begin{pmatrix} 1 & 1 & 0 & 0 \\\ 0 & 0 & 1 & 1 \\\ 0 & 1 & 1 & 0 \\\ 1 & 0 & 0 & 1 \end{pmatrix} $$
 
 1. Compute $Q$:
-  $$
-  Q = (X + PE_{\text{input}}) \times W_Q
-  $$
+  
+$$
+Q = (X + PE_{\text{input}}) \times W_Q
+$$
 
 2. Compute $K$:
-  $$
-  K = (X + PE_{\text{input}}) \times W_K
-  $$
+  
+$$
+K = (X + PE_{\text{input}}) \times W_K
+$$
 
 3. Compute $V$:
-  $$
-  V = (X + PE_{\text{input}}) \times W_V
-  $$
+  
+$$
+V = (X + PE_{\text{input}}) \times W_V
+$$
 
 Let's calculate these values:
 
@@ -561,26 +564,16 @@ Returning to [Troy Wang's paper](https://www.cis.upenn.edu/wp-content/uploads/20
 What this would actually look like. Here we just make up some matrix and assume that it is the output from head 2; it would have been generated exactly as we did the output from the first head.
 
 1. **Compute for Head 2**:  
-   First, let's assume the output of the second attention head (`head_2`) is:
-$$
-\text{Attention}_2(Q, K, V) = 
-\begin{pmatrix}
-1.5 & 0.8 & 1.2 & 2.0 \\\\
-1.6 & 0.9 & 1.1 & 2.1 \\\\
-1.4 & 0.7 & 1.3 & 1.9
-\end{pmatrix}
-$$
+
+First, let's assume the output of the second attention head (`head_2`) is:
+
+$$ \text{Attention}_2(Q, K, V) = \begin{pmatrix} 1.5 & 0.8 & 1.2 & 2.0 \\\ 1.6 & 0.9 & 1.1 & 2.1 \\\ 1.4 & 0.7 & 1.3 & 1.9 \end{pmatrix} $$
 
 2. **Concatenate Outputs**:  
-   Now, we concatenate the outputs of `head_1` and `head_2`:
-$$
-\text{Concat}(\text{Attention}_1, \text{Attention}_2) = 
-\begin{pmatrix}
-2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 & 1.5 & 0.8 & 1.2 & 2.0 \\\\
-2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 & 1.6 & 0.9 & 1.1 & 2.1 \\\\
-1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 & 1.4 & 0.7 & 1.3 & 1.9
-\end{pmatrix}
-$$
+
+Now, we concatenate the outputs of `head_1` and `head_2`:
+
+$$ \text{Concat}(\text{Attention}_1, \text{Attention}_2) = \begin{pmatrix} 2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 & 1.5 & 0.8 & 1.2 & 2.0 \\\ 2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 & 1.6 & 0.9 & 1.1 & 2.1 \\\ 1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 & 1.4 & 0.7 & 1.3 & 1.9 \end{pmatrix} $$
 
 3. **Final Linear Projection**:  
    Finally, we multiply the concatenated matrix with a learned projection matrix $W_O$. For the sake of simplicity in this example, let's assume $W_O$ is an 8x4 matrix filled with 0.5. In a real-world scenario, this matrix would have learned values.
