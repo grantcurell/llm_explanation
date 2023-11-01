@@ -408,33 +408,43 @@ W_V = \begin{pmatrix} 1 & 1 & 0 & 0 \\\\ 0 & 0 & 1 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 1
 $$
 
 2. **Compute Q, K, and V**: Multiply the input matrix $X$ with these weights:
-  $$
-  Q = X \times W_Q
-  $$
-  $$
-  K = X \times W_K
-  $$
-  $$
-  V = X \times W_V
-  $$
+  
+$$
+Q = X \times W_Q
+$$
+
+$$
+K = X \times W_K
+$$
+
+$$
+V = X \times W_V
+$$
+
 3. **Calculate Attention Scores**: This is done by multiplying $Q$ with $K^T$, then dividing by the square root of the dimension of the key vectors $d_k$. In our example, $d_k$ is 4.
-  $$
-  Score = \frac{Q \times K^T}{\sqrt{d_k}}
-  $$
+  
+$$
+Score = \frac{Q \times K^T}{\sqrt{d_k}}
+$$
+
 4. **Apply Softmax to the Scores**: This will give each word's attention score.
-  $$
-  SoftmaxScore = \text{softmax}(Score)
-  $$
+  
+$$
+SoftmaxScore = \text{softmax}(Score)
+$$
+  
 5. **Multiply Softmax Score with V**: This will give the weighted representation of the input with respect to other words in the sentence.
-  $$
-  AttentionOutput = SoftmaxScore \times V
-  $$
+  
+$$
+AttentionOutput = SoftmaxScore \times V
+$$
 
 Let's calculate the matrices Q, K, V, Score, SoftmaxScore, and AttentionOutput:
 
 To begin, we will compute the $Q$, $K$, and $V$ matrices.
 
 Using:
+
 $$ X + PE_{\text{input}} = \begin{pmatrix} 0.1 & 1.2 & -0.1 & 1.4 \\\ -0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\ 0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} $$
 
 Given the weight matrices:
