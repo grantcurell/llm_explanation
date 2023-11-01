@@ -471,35 +471,13 @@ $$
 
 Given:
 
-$$
-X + PE_{\text{input}} = 
-\begin{pmatrix}
-0.1 & 1.2 & -0.1 & 1.4 \\\\
--0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\\
-0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right)
-\end{pmatrix}
-$$
+$$ X + PE_{\text{input}} = \begin{pmatrix} 0.1 & 1.2 & -0.1 & 1.4 \\\ -0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\ 0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} $$
 
-$$
-W_Q = 
-\begin{pmatrix} 
-1 & 0 & 0 & 1 \\\\ 
-0 & 1 & 1 & 0 \\\\ 
-0 & 1 & 0 & 1 \\\\ 
-1 & 0 & 1 & 0 
-\end{pmatrix} 
-$$
+$$ W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\ 0 & 1 & 1 & 0 \\\ 0 & 1 & 0 & 1 \\\ 1 & 0 & 1 & 0 \end{pmatrix} $$
 
 When you multiply the above matrices, you get:
 
-$$
-Q=\begin{pmatrix}
-1.5 & 1.1 & 2.6 & 0 \\\\
-1.3415 & 1.6 & 2.3 & 0.6415 \\\\
-2.4093 & 0.8998 & 1.7998 & 1.5093
-\end{pmatrix}
-$$
-
+$$ Q = \begin{pmatrix} 1.5 & 1.1 & 2.6 & 0 \\\ 1.3415 & 1.6 & 2.3 & 0.6415 \\\ 2.4093 & 0.8998 & 1.7998 & 1.5093 \end{pmatrix} $$
 
 If your matrix multiplication is rusty see [the matrix math behind this calculation](#matrix-multiplication).
 
