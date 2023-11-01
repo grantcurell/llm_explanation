@@ -392,7 +392,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}
 
 Given the above steps for calculating self-attention, let's break it down:
 1. **Create Query (Q), Key (K), and Value (V) Matrices**: We obtain these by multiplying the input embeddings (with position encodings) with the weight matrices $W_Q$, $W_K$, and $W_V$ respectively. 
-  For the sake of this example, we will assume these weight matrices are:
+For the sake of this example, we will assume these weight matrices are:
 $$
 W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\\ 0 & 1 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \\\\ 1 & 0 & 1 & 0 \end{pmatrix}
 $$
