@@ -26,6 +26,7 @@
       - [Plot XOR](#plot-xor)
 
 
+
 ## Overview
 
 The purpose of this whitepaper is to explain at a medium to low level how LLMs work such that we can make informed decisions about their performance and architectural decisions.
@@ -90,13 +91,14 @@ Now we need to do the same thing for the output embedding. In many sequence-to-s
     - 'nada' is mapped to $[0.5, -0.1, -0.4, 0.3]$.
 
 3. **Output Matrix \(Y\)** with the start token:
-    $$
-    Y = \begin{pmatrix}
-    0.0 & 0.0 & 0.0 & 0.0 \\\\
-    -0.2 & 0.4 & 0.3 & 0.1 \\\\
-    0.5 & -0.1 & -0.4 & 0.3
-    \end{pmatrix}
-    $$
+   
+$$
+Y = \begin{pmatrix}
+0.0 & 0.0 & 0.0 & 0.0 \\\\
+-0.2 & 0.4 & 0.3 & 0.1 \\\\
+0.5 & -0.1 & -0.4 & 0.3
+\end{pmatrix}
+$$
 
 The inclusion of the start token helps the model recognize the beginning of the output sequence. If there's an end token, it can similarly indicate the end of the sequence, especially useful in generation tasks. What I don't show here is a padding but in the actual models you would likely also have a pad. Ex: `['<start>', 'de', 'nada', '<pad>', '<pad>']` to make sure that the input sequences are the same size. This is a feature of the traditional transformer model but will not appear in the GPT-style models.
 
