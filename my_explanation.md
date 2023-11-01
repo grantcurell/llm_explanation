@@ -96,13 +96,7 @@ Now we need to do the same thing for the output embedding. In many sequence-to-s
 
 3. **Output Matrix \(Y\)** with the start token:
    
-$$
-Y = \begin{pmatrix}
-0.0 & 0.0 & 0.0 & 0.0 \\\\
--0.2 & 0.4 & 0.3 & 0.1 \\\\
-0.5 & -0.1 & -0.4 & 0.3
-\end{pmatrix}
-$$
+$$ Y = \begin{pmatrix} 0.0 & 0.0 & 0.0 & 0.0 \\\ -0.2 & 0.4 & 0.3 & 0.1 \\\ 0.5 & -0.1 & -0.4 & 0.3 \end{pmatrix} $$
 
 The inclusion of the start token helps the model recognize the beginning of the output sequence. If there's an end token, it can similarly indicate the end of the sequence, especially useful in generation tasks. What I don't show here is a padding but in the actual models you would likely also have a pad. Ex: `['<start>', 'de', 'nada', '<pad>', '<pad>']` to make sure that the input sequences are the same size. This is a feature of the traditional transformer model but will not appear in the GPT-style models.
 
@@ -200,46 +194,15 @@ Finally, to incorporate these position encodings into our embeddings, you would 
 
 Given:
 
-$$
-X = \begin{pmatrix}
-0.1 & 0.2 & -0.1 & 0.4 \\\\
--0.3 & 0.5 & 0.1 & -0.2 \\\\
-0.4 & -0.3 & 0.2 & 0.1
-\end{pmatrix}
-$$
+$$ X = \begin{pmatrix} 0.1 & 0.2 & -0.1 & 0.4 \\\ -0.3 & 0.5 & 0.1 & -0.2 \\\ 0.4 & -0.3 & 0.2 & 0.1 \end{pmatrix} $$
 
-$$
-Y = \begin{pmatrix}
-0.0 & 0.0 & 0.0 & 0.0 \\\\
--0.2 & 0.4 & 0.3 & 0.1 \\\\
-0.5 & -0.1 & -0.4 & 0.3
-\end{pmatrix}
-$$
+$$ Y = \begin{pmatrix} 0.0 & 0.0 & 0.0 & 0.0 \\\ -0.2 & 0.4 & 0.3 & 0.1 \\\ 0.5 & -0.1 & -0.4 & 0.3 \end{pmatrix} $$
 
-The position encodings (from our previous calculations) are:
+$$ PE_{\text{input/output}} = \begin{pmatrix} 0 & 1 & 0 & 1 \\\ 0.8415 & 0.99995 & 0.0001 & 1 \\\ 0.9093 & 0.9998 & 0.0002 & 1 \end{pmatrix} $$
 
-$$
-PE_{\text{input/output}} = \begin{pmatrix}
-0 & 1 & 0 & 1 \\\\
-0.8415 & 0.99995 & 0.0001 & 1 \\\\
-0.9093 & 0.9998 & 0.0002 & 1
-\end{pmatrix}
-$$
+$$ X + PE_{\text{input}} = \begin{pmatrix} 0.1 & 1.2 & -0.1 & 1.4 \\\ 0.5415 & 1.49995 & 0.1001 & 0.8 \\\ 1.3093 & 0.6998 & 0.2002 & 1.1 \end{pmatrix} $$
 
-Adding position encodings to $X$:
-
-$$
-X + PE_{\text{input}} = \begin{pmatrix}
-0.1 + 0 & 0.2 + 1 & -0.1 + 0 & 0.4 + 1 \\\\
--0.3 + 0.8415 & 0.5 + 0.99995 & 0.1 + 0.0001 & -0.2 + 1 \\\\
-0.4 + 0.9093 & -0.3 + 0.9998 & 0.2 + 0.0002 & 0.1 + 1
-\end{pmatrix}
-= \begin{pmatrix}
-0.1 & 1.2 & -0.1 & 1.4 \\\\
-0.5415 & 1.49995 & 0.1001 & 0.8 \\\\
-1.3093 & 0.6998 & 0.2002 & 1.1
-\end{pmatrix}
-$$
+$$ Y + PE_{\text{output}} = \begin{pmatrix} 0.0 & 1.0 & 0.0 & 1.0 \\\ 0.6415 & 1.39995 & 0.3001 & 1.1 \\\ 1.4093 & 0.8998 & -0.3998 & 1.3 \end{pmatrix} $$
 
 Adding position encodings to $Y$:
 
