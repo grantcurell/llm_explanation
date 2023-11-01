@@ -141,7 +141,8 @@ For the input sequence, we have 3 words, so the positions are $pos = 0, 1, 2$.
 
 Using the given equations:
 
-1. For $pos = 0$:
+For $pos = 0$:
+
 $$
 PE_{(0, 0)} = \sin\left(\frac{0}{10000^{2(0)/4}}\right) = 0\space,\space
 PE_{(0, 1)} = \cos\left(\frac{0}{10000^{2(0+1)/4}}\right) = 1\space,\space
@@ -154,29 +155,32 @@ To break that down further:
 - $pos = 0$
 - $d_{\text{model}} = 4$
 
-1. **For $PE_{(0,0)}$**
+- **For $PE_{(0,0)}$**
     Using the formula for even indices (2i):
-    $$i = 0$$
-    $$PE_{(0, 2(0))} = \sin\left(\frac{0}{10000^{2(0)/4}}\right)$$
+$$i = 0$$
+$$PE_{(0, 2(0))} = \sin\left(\frac{0}{10000^{2(0)/4}}\right)$$
     Since $\sin(0)$ is 0, the value is 0.
 
-2. **For $PE_{(0,1)}$**
+- **For $PE_{(0,1)}$**
     Using the formula for odd indices (2i+1):
-    $$i = 0$$
-    $$PE_{(0, 2(0)+1)} = \cos\left(\frac{0}{10000^{2(0+1)/4}}\right)$$
-    Since $\cos(0)$ is 1, the value is 1.
+$$i = 0$$
+$$PE_{(0, 2(0)+1)} = \cos\left(\frac{0}{10000^{2(0+1)/4}}\right)$$
+    
+Since $\cos(0)$ is 1, the value is 1.
 
-3. **For $PE_{(0,2)}$**
+- **For $PE_{(0,2)}$**
     Using the formula for even indices (2i):
-    $$i = 1$$
-    $$PE_{(0, 2(1))} = \sin\left(\frac{0}{10000^{2(1)/4}}\right)$$
-    Again, since $\sin(0)$ is 0, the value is 0.
+$$i = 1$$
+$$PE_{(0, 2(1))} = \sin\left(\frac{0}{10000^{2(1)/4}}\right)$$
+    
+Again, since $\sin(0)$ is 0, the value is 0.
 
-4. **For $PE_{(0,3)}$**
+- **For $PE_{(0,3)}$**
     Using the formula for odd indices (2i+1):
-    $$i = 1$$
-    $$PE_{(0, 2(1)+1)} = \cos\left(\frac{0}{10000^{2(1+1)/4}}\right)$$
-    Once more, since $\cos(0)$ is 1, the value is 1.
+$$i = 1$$
+$$PE_{(0, 2(1)+1)} = \cos\left(\frac{0}{10000^{2(1+1)/4}}\right)$$
+    
+Once more, since $\cos(0)$ is 1, the value is 1.
 
 Following the same pattern for $pos = 1$ and $pos = 2$, we get:
 
