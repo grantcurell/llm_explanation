@@ -4,12 +4,27 @@
 - [\\end{pmatrix}](#endpmatrix-1)
       - [Adding Them Together](#adding-them-together)
     - [Encoder Stack Processing](#encoder-stack-processing)
+      - [Self Attention](#self-attention)
+        - [A Concrete Example](#a-concrete-example)
+      - [Attention Heads and Multi Attention Heads](#attention-heads-and-multi-attention-heads)
+      - [Layer Normalization](#layer-normalization)
+      - [Feed Forward Neural Net](#feed-forward-neural-net)
     - [Prepare and Embed Target Sequence for Decoder](#prepare-and-embed-target-sequence-for-decoder)
     - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
     - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
     - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
     - [Supplemental Information](#supplemental-information)
       - [Word Embeddings](#word-embeddings)
+      - [Weight Matrices](#weight-matrices)
+      - [Softmax](#softmax)
+      - [Matrix Multiplication](#matrix-multiplication)
+        - [Calculating Y](#calculating-y)
+      - [Calculate Attention Score](#calculate-attention-score)
+      - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
+      - [Calculate Layer Normalization](#calculate-layer-normalization)
+      - [Linear Regression Code](#linear-regression-code)
+      - [Plot XOR](#plot-xor)
+
 
 ## Overview
 
@@ -161,19 +176,17 @@ Following the same pattern for $pos = 1$ and $pos = 2$, we get:
 $$
 PE_{\text{input}} = 
 \begin{pmatrix}
-0 & 1 & 0 & 1 \\
-\sin\left(\frac{1}{10000^0}\right) & \cos\left(\frac{1}{10000^{0.5}}\right) & \sin\left(\frac{1}{10000^2}\right) & \cos\left(\frac{1}{10000^{2.5}}\right) \\
+0 & 1 & 0 & 1 \\\\
+\sin\left(\frac{1}{10000^0}\right) & \cos\left(\frac{1}{10000^{0.5}}\right) & \sin\left(\frac{1}{10000^2}\right) & \cos\left(\frac{1}{10000^{2.5}}\right) \\\\
 \sin\left(\frac{2}{10000^0}\right) & \cos\left(\frac{2}{10000^{0.5}}\right) & \sin\left(\frac{2}{10000^2}\right) & \cos\left(\frac{2}{10000^{2.5}}\right)
 \end{pmatrix}
 =
 \begin{pmatrix}
-0 & 1 & 0 & 1 \\
-0.8415 & 0.99995 & 0.0001 & 1 \\
+0 & 1 & 0 & 1 \\\\
+0.8415 & 0.99995 & 0.0001 & 1 \\\\
 0.9093 & 0.9998 & 0.0002 & 1
 \end{pmatrix}
 $$
-
-
 
 #### Output Embedding: "<start> de nada"
 
@@ -184,14 +197,14 @@ Using the equations similarly:
 $$
 PE_{\text{output}} = 
 \begin{pmatrix}
-0 & 1 & 0 & 1 \\
-\sin\left(\frac{1}{10000^0}\right) & \cos\left(\frac{1}{10000^{0.5}}\right) & \sin\left(\frac{1}{10000^2}\right) & \cos\left(\frac{1}{10000^{2.5}}\right) \\
+0 & 1 & 0 & 1 \\\\
+\sin\left(\frac{1}{10000^0}\right) & \cos\left(\frac{1}{10000^{0.5}}\right) & \sin\left(\frac{1}{10000^2}\right) & \cos\left(\frac{1}{10000^{2.5}}\right) \\\\
 \sin\left(\frac{2}{10000^0}\right) & \cos\left(\frac{2}{10000^{0.5}}\right) & \sin\left(\frac{2}{10000^2}\right) & \cos\left(\frac{2}{10000^{2.5}}\right)
 \end{pmatrix}
 =
 \begin{pmatrix}
-0 & 1 & 0 & 1 \\
-0.8415 & 0.99995 & 0.0001 & 1 \\
+0 & 1 & 0 & 1 \\\\
+0.8415 & 0.99995 & 0.0001 & 1 \\\\
 0.9093 & 0.9998 & 0.0002 & 1
 \end{pmatrix}
 $$
@@ -767,6 +780,35 @@ $$
 \end{pmatrix}
 $$
 
+#### Feed Forward Neural Net
+
+Finally we reach the feed forward network - the piece at the heart of most AI models. So much of AI is based on these things I think it's worth spending a bit of time explaining how they work.
+
+The book [Deep Learning (2017, MIT), by Ian Goodfellow, Yoshua Bengio, and Aaron Courville](https://www.deeplearningbook.org/contents/mlp.html) does a really good job of explaining this along with some common terms from deep learning so I will just quote it here.
+
+> **Deep feedforward networks**, also often called **feedforward neural networks**, or **multilayer perceptrons (MLPs)**, are the quintessential deep learning models. The goal of a feedforward network is to approximate some function $f^*$. For example, for a classifier, $y = f^*(x)$ maps an input $x$ to a category $y$. A feedforward network defines a mapping $y = f(x; \theta)$ and learns the value of the parameters $\theta$ that result in the best function approximation.
+>
+> These models are called **feedforward** because information flows through the function being evaluated from $x$, through the intermediate computations used to define $f$, and finally to the output $y$. There are no feedback connections in which outputs of the model are fed back into itself. When feedforward neural networks are extended to include feedback connections, they are called **recurrent neural networks**, presented in chapter 10.
+>
+> **Feedforward networks** are of extreme importance to machine learning practitioners. They form the basis of many important commercial applications. For example, the convolutional networks used for object recognition from photos are a specialized kind of feedforward network. Feedforward networks are a conceptual stepping stone on the path to recurrent networks, which power many natural language applications.
+>
+> **Feedforward neural networks** are called **networks** because they are typically represented by composing together many different functions. The model is associated with a directed acyclic graph describing how the functions are composed together. For example, we might have three functions $f^{(1)}, f^{(2)},$ and $f^{(3)}$ connected in a chain, to form $f(x) = f^{(3)}(f^{(2)}(f^{(1)}(x)))$. These chain structures are the most commonly used structures of neural networks. In this case, $f^{(1)}$ is called the first layer of the network, $f^{(2)}$ is called the second layer, and so on. The overall length of the chain gives the depth of the model. It is from this terminology that the name "deep learning" arises. The final layer of a feedforward network is called the **output layer**. During neural network training, we drive $f(x)$ to match $f^*(x)$. The training data provides us with noisy, approximate examples of $f^*(x)$ evaluated at different training points. Each example $x$ is accompanied by a label $y \approx f^*(x)$. The training examples specify directly what the output layer must do at each point $x$; it must produce a value that is close to $y$. The behavior of the other layers is not directly specified by the training data. The learning algorithm must decide how to use those layers to produce the desired output, but the training data does not say what each individual layer should do. Instead, the learning algorithm must decide how to use these layers to best implement an approximation of $f^*$. Because the training data does not show the desired output for each of these layers, these layers are called **hidden layers**.
+>
+> Finally, these networks are called *neural* because they are loosely inspired by neuroscience. Each hidden layer of the network is typically vector-valued. The dimensionality of these hidden layers determines the **width** of the model. Each element of the vector may be interpreted as playing a role analogous to a neuron. Rather than thinking of the layer as representing a single vector-to-vector function, we can also think of the layer as consisting of many **units** that act in parallel, each representing a vector-to-scalar function. Each unit resembles a neuron in the sense that it receives input from many other units and computes its own activation value. The idea of using many layers of vector-valued representation is drawn from neuroscience. The choice of the functions $f^{(i)}(x)$ used to compute these representations is also loosely guided by neuroscientific observations about the functions that biological neurons compute. However, modern neural network research is guided by many mathematical and engineering disciplines, and the goal of neural networks is not to perfectly model the brain. It is best to think of feedforward networks as function approximation machines that are designed to achieve statistical generalization, occasionally drawing some insights from what we know about the brain, rather than as models of brain function.
+
+You might be asking yourself what the difference between all this and a linear regression. The [Deep Learning book](https://www.deeplearningbook.org/contents/mlp.html) gets into this on page 165. I leave out this discussion and instead provide a simple picture below which displays some true function that we are trying to approximate and allows you to compare the two graphs:
+
+![](images/2023-11-01-08-31-24.png)
+
+I used [this code](#linear-regression-code) to generate the plot using tensor flow. What's cool about that plot is that it is a real machine learning problem and that is the real performance of the two models.
+
+As the Deep Learning book points out, there isn't even a way to approximate something as simple as the XOR function with linear regression. Here is a [plot of what XOR](#plot-xor) looks like:
+
+![](images/2023-11-01-09-01-39.png)
+
+
+
+
 
 ### Prepare and Embed Target Sequence for Decoder
 ### Decoder Stack Processing with Encoder Output
@@ -1222,3 +1264,99 @@ Output:
  [-0.97825977  0.09190721  1.59246789 -0.70611533]
  [-1.10306273  0.02854757  1.58729045 -0.51277529]]
 ```
+
+#### Linear Regression Code
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+import tensorflow as tf
+
+# Generate data
+X = np.linspace(-10, 10, 100).reshape(-1, 1)
+y = np.sin(X)
+
+# Create and train the linear model
+linear_model = LinearRegression()
+linear_model.fit(X, y)
+
+# Predict with linear model
+y_linear_pred = linear_model.predict(X)
+
+# Create and train the neural network model
+nn_model = tf.keras.Sequential([
+    tf.keras.layers.Dense(10, input_shape=(1,), activation='relu'),
+    tf.keras.layers.Dense(10, activation='relu'),
+    tf.keras.layers.Dense(1)
+])
+
+nn_model.compile(optimizer='adam', loss='mean_squared_error')
+nn_model.fit(X, y, epochs=1000, verbose=0)
+
+# Predict with neural network model
+y_nn_pred = nn_model.predict(X)
+
+# Plotting
+fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+# Linear model plot
+axs[0].scatter(X, y, label='True Function', color='blue')
+axs[0].plot(X, y_linear_pred, label='Linear Model', color='red')
+axs[0].legend()
+axs[0].set_title('Linear Model')
+
+# Deep Feedforward Network plot
+axs[1].scatter(X, y, label='True Function', color='blue')
+axs[1].plot(X, y_nn_pred, label='Deep Network', color='green')
+axs[1].legend()
+axs[1].set_title('Deep Feedforward Network')
+
+plt.show()
+
+```
+
+Output:
+
+![](images/2023-11-01-08-31-24.png)
+
+#### Plot XOR
+
+
+```python
+import matplotlib.pyplot as plt
+
+def plot_xor():
+    # Coordinates for the points
+    x = [0, 1, 0, 1]
+    y = [0, 0, 1, 1]
+    
+    # XOR values for the points
+    colors = [0, 1, 1, 0]
+    
+    # Plot the points
+    plt.scatter(x, y, c=colors, s=100, cmap="gray", edgecolors="black", linewidth=1.5)
+    
+    # Set axis labels and title
+    plt.xlabel("$x_1$")
+    plt.ylabel("$x_2$")
+    plt.title("Original $x$ space")
+    
+    # Adjust axis limits
+    plt.xlim(-0.1, 1.1)
+    plt.ylim(-0.1, 1.1)
+    
+    # Show grid
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    
+    # Set equal aspect ratio
+    plt.gca().set_aspect('equal', adjustable='box')
+    
+    plt.show()
+
+plot_xor()
+```
+
+Output:
+
+![](images/2023-11-01-09-01-39.png)
