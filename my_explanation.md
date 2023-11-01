@@ -1,29 +1,33 @@
 
-- [\\end{pmatrix}](#endpmatrix)
-      - [Output Embedding: " de nada"](#output-embedding--de-nada)
-- [\\end{pmatrix}](#endpmatrix-1)
-      - [Adding Them Together](#adding-them-together)
-    - [Encoder Stack Processing](#encoder-stack-processing)
-      - [Self Attention](#self-attention)
-        - [A Concrete Example](#a-concrete-example)
-      - [Attention Heads and Multi Attention Heads](#attention-heads-and-multi-attention-heads)
-      - [Layer Normalization](#layer-normalization)
-      - [Feed Forward Neural Net](#feed-forward-neural-net)
-    - [Prepare and Embed Target Sequence for Decoder](#prepare-and-embed-target-sequence-for-decoder)
-    - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
-    - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
-    - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
-    - [Supplemental Information](#supplemental-information)
-      - [Word Embeddings](#word-embeddings)
-      - [Weight Matrices](#weight-matrices)
-      - [Softmax](#softmax)
-      - [Matrix Multiplication](#matrix-multiplication)
-        - [Calculating Y](#calculating-y)
-      - [Calculate Attention Score](#calculate-attention-score)
-      - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
-      - [Calculate Layer Normalization](#calculate-layer-normalization)
-      - [Linear Regression Code](#linear-regression-code)
-      - [Plot XOR](#plot-xor)
+- [Overview](#overview)
+- [How Transformers Work](#how-transformers-work)
+  - [1 - Input Sequence to Encoder Embeddings](#1---input-sequence-to-encoder-embeddings)
+  - [1.5 Position Encoding](#15-position-encoding)
+    - [Input Embedding: "You are welcome"](#input-embedding-you-are-welcome)
+    - [Output Embedding: " de nada"](#output-embedding--de-nada)
+    - [Adding Them Together](#adding-them-together)
+  - [Encoder Stack Processing](#encoder-stack-processing)
+    - [Self Attention](#self-attention)
+      - [A Concrete Example](#a-concrete-example)
+    - [Attention Heads and Multi Attention Heads](#attention-heads-and-multi-attention-heads)
+    - [Layer Normalization](#layer-normalization)
+    - [Feed Forward Neural Net](#feed-forward-neural-net)
+  - [Prepare and Embed Target Sequence for Decoder](#prepare-and-embed-target-sequence-for-decoder)
+  - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
+  - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
+  - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
+  - [Supplemental Information](#supplemental-information)
+    - [Word Embeddings](#word-embeddings)
+    - [Weight Matrices](#weight-matrices)
+    - [Softmax](#softmax)
+    - [Matrix Multiplication](#matrix-multiplication)
+      - [Calculating Y](#calculating-y)
+    - [Calculate Attention Score](#calculate-attention-score)
+    - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
+    - [Calculate Layer Normalization](#calculate-layer-normalization)
+    - [Linear Regression Code](#linear-regression-code)
+    - [Plot XOR](#plot-xor)
+
 
 
 
@@ -507,34 +511,13 @@ $$
 
 Given:
 
-$$
-X + PE_{\text{input}} = 
-\begin{pmatrix}
-0.1 & 1.2 & -0.1 & 1.4 \\\\
--0.3 + \sin(\frac{1}{10000^0}) & 0.5 + \cos(\frac{1}{10000^0.5}) & 0.1 + \sin(\frac{1}{10000^2}) & -0.2 + \cos(\frac{1}{10000^2.5}) \\\\
-0.4 + \sin(\frac{2}{10000^0}) & -0.3 + \cos(\frac{2}{10000^0.5}) & 0.2 + \sin(\frac{2}{10000^2}) & 0.1 + \cos(\frac{2}{10000^2.5})
-\end{pmatrix}
-$$
+$$ X + PE_{\text{input}} = \begin{pmatrix} 0.1 & 1.2 & -0.1 & 1.4 \\\ -0.3 + \sin\left(\frac{1}{10000^0}\right) & 0.5 + \cos\left(\frac{1}{10000^{0.5}}\right) & 0.1 + \sin\left(\frac{1}{10000^2}\right) & -0.2 + \cos\left(\frac{1}{10000^{2.5}}\right) \\\ 0.4 + \sin\left(\frac{2}{10000^0}\right) & -0.3 + \cos\left(\frac{2}{10000^{0.5}}\right) & 0.2 + \sin\left(\frac{2}{10000^2}\right) & 0.1 + \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} $$
 
-$$
-W_K = 
-\begin{pmatrix} 
-0 & 1 & 1 & 0 \\\\ 
-1 & 0 & 0 & 1 \\\\ 
-1 & 0 & 1 & 0 \\\\ 
-0 & 1 & 0 & 1 
-\end{pmatrix} 
-$$
+$$ W_Q = \begin{pmatrix} 1 & 0 & 0 & 1 \\\ 0 & 1 & 1 & 0 \\\ 0 & 1 & 0 & 1 \\\ 1 & 0 & 1 & 0 \end{pmatrix} $$
 
 When you multiply the above matrices, you get:
 
-$$
-K=\begin{pmatrix}
-1.1 & 1.5 & 0 & 2.6 \\\\
-1.6001 & 1.3415 & 0.6416 & 2.3 \\\\
-0.9 & 2.4093 & 1.5095 & 1.7998
-\end{pmatrix}
-$$
+$$ Q = \begin{pmatrix} 1.5 & 1.1 & 2.6 & 0 \\\ 1.3415 & 1.6 & 2.3 & 0.6415 \\\ 2.4093 & 0.8998 & 1.7998 & 1.5093 \end{pmatrix} $$
 
 Finally we do the math for $V$. $X + PE_{\text{input}}$ and the $W_V$ matrix:
 
