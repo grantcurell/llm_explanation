@@ -702,7 +702,7 @@ To interpret these scores as probabilities, we use the softmax function.
 Applying softmax:
 
 $$
-\text{softmax}(x)_i = \frac{e^{x_i}}{\sum_{j=1}^{3} e^{x_j}}
+\text{softmax}(x)_i = \frac{e^{x_i}}{{\sum e^{x_j}}}
 $$
 
 For each component:
