@@ -68,9 +68,14 @@ Let's assume you have a word embedding model that maps each word in the sentence
 
 3. **Input Matrix \(X\)**:
     - The vectors are stacked to form the input matrix \(X\):
-    
-$$ X = \begin{pmatrix} 0.1 & 0.2 & -0.1 & 0.4 \\ -0.3 & 0.5 & 0.1 & -0.2 \\ 0.4 & -0.3 & 0.2 & 0.1 \end{pmatrix} $$
 
+$$
+X = \begin{pmatrix}
+0.1 & 0.2 & -0.1 & 0.4 \\\\
+-0.3 & 0.5 & 0.1 & -0.2 \\\\
+0.4 & -0.3 & 0.2 & 0.1
+\end{pmatrix}
+$$
 
 This \(X\) matrix serves as the input to the neural network, and each row corresponds to the embedding of a word in the sentence "You are welcome". 
 
