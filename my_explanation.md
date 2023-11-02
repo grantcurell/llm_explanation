@@ -16,17 +16,19 @@
   - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
   - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
   - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
-  - [Supplemental Information](#supplemental-information)
-    - [Word Embeddings](#word-embeddings)
-    - [Weight Matrices](#weight-matrices)
-    - [Softmax](#softmax)
-    - [Matrix Multiplication](#matrix-multiplication)
-      - [Calculating Y](#calculating-y)
-    - [Calculate Attention Score](#calculate-attention-score)
-    - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
-    - [Calculate Layer Normalization](#calculate-layer-normalization)
-    - [Linear Regression Code](#linear-regression-code)
-    - [Plot XOR](#plot-xor)
+- [Supplemental Information](#supplemental-information)
+  - [Word Embeddings](#word-embeddings)
+  - [Weight Matrices](#weight-matrices)
+  - [Softmax](#softmax)
+  - [Matrix Multiplication](#matrix-multiplication)
+    - [Calculating Y](#calculating-y)
+  - [Calculate Attention Score](#calculate-attention-score)
+  - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
+  - [Calculate Layer Normalization](#calculate-layer-normalization)
+  - [Linear Regression Code](#linear-regression-code)
+  - [Plot XOR](#plot-xor)
+  - [XOR Example](#xor-example)
+    - [Using Rectified Linear Units (ReLU)](#using-rectified-linear-units-relu)
 
 
 
@@ -323,7 +325,6 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}
     - **What happens**: The scores for each token are turned into a probability distribution using the softmax function.
     - **How it happens**: Softmax normalizes the scores so they're between 0 and 1 and sum up to 1.
     - **Why it matters**: This provides a clear set of attention "weights" for each token. The higher the softmax output, the more attention the model pays to the corresponding token.
-      - I wasn't immediately clear on why softmax. TODO
     - **Relationship to equation**: This step is captured by the $\text{softmax}(\cdot)$ operation in the equation.
 
 5. **Calculating Weighted Values**:
@@ -504,6 +505,16 @@ I did this with [this python code](#calculate-attention-score):
 
 $$ \text{Attention}(Q, K, V) = \begin{pmatrix} 2.11372594 & 1.21488963 & 1.06582258 & 1.96465889 \\\ 2.10729705 & 1.1957622 & 1.06288922 & 1.97442407 \\\ 1.82115196 & 0.90157546 & 1.21880742 & 2.13838393 \end{pmatrix} $$
 
+It's worth mentioning that the result of this portion of the equation (before we multiply by $V$):
+
+$$\text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right)$$
+
+the result is:
+
+$$\begin{pmatrix} 0.07057112 & 0.21671075 & 0.71271813 \\ 0.08861574 & 0.2073653 & 0.70401897 \\ 0.16858447 & 0.40724309 & 0.42417243 \end{pmatrix}$$
+
+Notice how, as we expected with softmax, each row of the matrix adds to one. This is what is creating our probability distribution.
+
 #### Attention Heads and Multi Attention Heads
 
 I will not do all the math here as it is an exact repeat of what we have above, but the actual models will use multiple attention heads. Each attention head "pays attention" to different parts of the sentence. The goal being to avoid a few tokens (words) having an outsized impact on the output. We want to pay attention to the totality of the sentence.
@@ -558,6 +569,8 @@ $$ \text{Concat}(\text{Attention}_1, \text{Attention}_2) = \begin{pmatrix} 2.113
 I don't want to get too into the weeds on this, but it is worth making a brief note on why this is better than RNN. The short version is it's faster. For starters, all the calculations for each attention head can run in parallel completely independently.
 
 The other great part is that the calculation is independent of input length. You could feed in 1000 words or 500 and the attention calculation runs at the same speed.
+
+
 
 
 #### Layer Normalization
@@ -627,8 +640,38 @@ As the Deep Learning book points out, there isn't even a way to approximate some
 
 ![](images/2023-11-01-09-01-39.png)
 
+There is an example of how XOR works [here](#xor-example).
 
+So taking it to our example. Given we start with this output from the layer normalization:
 
+$$\text{LN}(x_i) = \begin{pmatrix} -1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\ -0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\ -1.10306273 & 0.02854757 & 1.58729045 & -0.51277529 \end{pmatrix}$$
+
+Now, let's pass this through a simple FFNN. We will assume:
+
+1. We project the data up to 6 dimensions (just for demonstration purposes) and then project it back to 4 dimensions.
+2. We use a ReLU activation function between the two linear transformations.
+
+Given this:
+
+1. The weight matrices will be \( W_1 \) of size [4x6] and \( W_2 \) of size [6x4].
+2. The bias vectors will be \( b_1 \) of size [6] and \( b_2 \) of size [4].
+
+Let's randomly initialize these parameters for the demonstration:
+
+$$W_1 = \begin{pmatrix} 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 \\ 0.7 & 0.8 & 0.9 & 1.0 & 1.1 & 1.2 \\ 1.3 & 1.4 & 1.5 & 1.6 & 1.7 & 1.8 \\ 1.9 & 2.0 & 2.1 & 2.2 & 2.3 & 2.4 \end{pmatrix}$$
+
+$$b_1 = \begin{pmatrix} 0.01 \\ 0.02 \\ 0.03 \\ 0.04 \\ 0.05 \\ 0.06 \end{pmatrix}$$
+
+$$W_2 = \begin{pmatrix} 0.1 & 0.7 & 1.3 & 1.9 \\ 0.2 & 0.8 & 1.4 & 2.0 \\ 0.3 & 0.9 & 1.5 & 2.1 \\ 0.4 & 1.0 & 1.6 & 2.2 \\ 0.5 & 1.1 & 1.7 & 2.3 \\ 0.6 & 1.2 & 1.8 & 2.4 \end{pmatrix}$$
+
+$$b_2 = \begin{pmatrix} 0.01 & 0.02 & 0.03 & 0.04 \end{pmatrix}$$
+
+Applying the FFNN:
+
+1. First linear transformation: $z_1 = \text{LN}(x_i) \times W_1 + b_1$
+2. Apply ReLU activation: $a_1 = \text{ReLU}(z_1)$
+3. Second linear transformation: $z_2 = a_1 \times W_2 + b_2$
+4. Final output $z_2$ will be of size [3x4] representing the transformed data.
 
 
 ### Prepare and Embed Target Sequence for Decoder
@@ -636,9 +679,9 @@ As the Deep Learning book points out, there isn't even a way to approximate some
 ### Output Layer for Word Probabilities
 ### Loss Function and Back-Propagation
 
-### Supplemental Information
+## Supplemental Information
 
-#### Word Embeddings
+### Word Embeddings
 
 The first question(s) I asked when I saw these matrices is, "Where do these values come from and what are they?" What followed soon after was, "Why do they exist?" Why they exist lends context to where do they come from and what are they.
 
@@ -676,7 +719,7 @@ The values in the embedding are updated during the training phase. Most models t
 
 Realistic answer? We don't really fully understand. We understand parts, but the simple answer is that the model learns values it "thinks" are sensible. There are entire papers written to explain just fractions of the relationships.
 
-#### Weight Matrices
+### Weight Matrices
 
 The weight matrices $W_Q$, $W_K$, and $W_V$ are learned parameters in the self-attention mechanism of the transformer model. Here's a more detailed explanation:
 1. **Initialization**: At the beginning of the training process, these matrices are usually initialized with small random values. This can be achieved through various initialization techniques, such as Xavier or He initialization.
@@ -684,7 +727,7 @@ The weight matrices $W_Q$, $W_K$, and $W_V$ are learned parameters in the self-a
 3. **Role of Backpropagation**: The updating of these matrices is governed by backpropagation, a fundamental technique in training deep neural networks. Gradients are computed for the loss with respect to each element of these matrices, which indicates how much a small change in that element would affect the overall loss. These gradients are then used to adjust the matrices in the direction that minimizes the loss.
 4. **Final Model**: After many iterations (epochs) of training, these matrices converge to values that allow the transformer model to effectively compute self-attention over the input data. In other words, through training, the model learns the best values for these matrices to perform the task at hand, whether it's language translation, text classification, or any other NLP task.
 
-#### Softmax
+### Softmax
 
 Let's say we have a neural network that is trying to classify an input into one of three categories. The final layer of the network produces a vector of logits (raw prediction scores) for each category:
 
@@ -703,6 +746,10 @@ Applying softmax:
 
 $$
 \text{softmax}(x)_i = \frac{e^{x_i}}{{\sum e^{x_j}}}
+$$
+
+$$
+\text{softmax}(x)_i = \frac{e^{x_i}}{\sum_{j=1}^{3} e^{x_j}}
 $$
 
 For each component:
@@ -736,7 +783,7 @@ The values sum up to 1, and the largest logit (2.0 for Category A) corresponds t
 2. **Emphasizing Differences**: Even subtle differences in logits can be emphasized. In our example, the difference between 2.0 and 1.0 becomes a difference between 65% and 24% in probabilities.
 3. **Self-attention mechanism**: In the context of Transformers and self-attention, softmax is applied to the scores (results of Q and K dot products) to determine the weight or attention each input should get. By turning these scores into probabilities, the model decides which parts of the input sequence are most relevant for each position, effectively weighting the contribution of each input's value (from the V matrix) when producing the output.
 
-#### Matrix Multiplication
+### Matrix Multiplication
 
 Given:
 
@@ -888,7 +935,7 @@ V:
 >
 ```
 
-##### Calculating Y
+#### Calculating Y
 
 Calculate for $Y$:
 
@@ -958,7 +1005,7 @@ V matrix:
  [2.7093  1.0095  0.5     2.1998 ]]
 ```
 
-#### Calculate Attention Score
+### Calculate Attention Score
 
 ```python
 import numpy as np
@@ -1009,7 +1056,7 @@ Attention(Q, K, V) =
  [1.82115196 0.90157546 1.21880742 2.13838393]]
 ```
 
-#### Calculate Multi-Attention Head Output
+### Calculate Multi-Attention Head Output
 
 ```python
 import numpy as np
@@ -1057,7 +1104,7 @@ Output:
  [4.21254506 5.31988824 6.84520426 4.79017392]]
 ```
 
-#### Calculate Layer Normalization
+### Calculate Layer Normalization
 
 ```python
 import numpy as np
@@ -1091,7 +1138,7 @@ Output:
  [-1.10306273  0.02854757  1.58729045 -0.51277529]]
 ```
 
-#### Linear Regression Code
+### Linear Regression Code
 
 ```python
 import numpy as np
@@ -1146,7 +1193,7 @@ Output:
 
 ![](images/2023-11-01-08-31-24.png)
 
-#### Plot XOR
+### Plot XOR
 
 
 ```python
@@ -1186,3 +1233,215 @@ plot_xor()
 Output:
 
 ![](images/2023-11-01-09-01-39.png)
+
+### XOR Example
+
+**1. Dataset for XOR:**
+
+| $x_1$ | $x_2$ | XOR |
+|-------|-------|-----|
+| 0     | 0     | 0   |
+| 0     | 1     | 1   |
+| 1     | 0     | 1   |
+| 1     | 1     | 0   |
+
+**2. Architecture:**
+- A 2-layer feedforward network
+- Input layer has 2 neurons (for $x_1$ and $x_2$)
+- Hidden layer has 2 neurons
+- Output layer has 1 neuron
+
+**3. Forward Pass:**
+
+Suppose we have the following weights and biases:
+
+For the hidden layer:
+
+$$
+W = \begin{bmatrix} 20 & 20 \\ -20 & -20 \end{bmatrix}
+$$
+
+$$
+c = \begin{bmatrix} -10 \\ 30 \end{bmatrix}
+$$
+
+For the output layer:
+
+$$
+w = \begin{bmatrix} 20 \\ 20 \end{bmatrix}
+$$
+
+$$
+b = -30
+$$
+
+We'll use the sigmoid function as our non-linearity:
+
+$$
+\sigma(z) = \frac{1}{1 + e^{-z}}
+$$
+
+**4. Computing for each Input:**
+
+For input $x = [0, 0]$:
+
+Hidden layer outputs:
+
+$$
+h_1 = \sigma(0 \times 20 + 0 \times 20 - 10) = \sigma(-10) \approx 0
+$$
+
+$$
+h_2 = \sigma(0 \times -20 + 0 \times -20 + 30) = \sigma(30) \approx 1
+$$
+
+Output layer:
+
+$$
+y = \sigma(0 \times 20 + 1 \times 20 - 30) = \sigma(-10) \approx 0
+$$
+
+This matches the XOR output for [0, 0], which is 0.
+
+Similar computations for the other inputs will provide the respective XOR outputs, illustrating that the network can represent the XOR function.
+
+The hidden layer effectively captures the regions of the input space where the XOR function is 1, and the output layer then combines these regions to produce the final XOR result.
+
+#### Using Rectified Linear Units (ReLU)
+
+ReLU is the most common activation function for deep learning so I figured I'd rewrite the example to use it just to compare and contrast.
+
+**1. Dataset for XOR remains the same:**
+
+| $x_1$ | $x_2$ | XOR |
+|-------|-------|-----|
+| 0     | 0     | 0   |
+| 0     | 1     | 1   |
+| 1     | 0     | 1   |
+| 1     | 1     | 0   |
+
+**2. Architecture:**
+- A 2-layer feedforward network
+- Input layer has 2 neurons (for $x_1$ and $x_2$)
+- Hidden layer has 2 neurons
+- Output layer has 1 neuron
+
+**ReLU Function:**
+
+$$
+\text{ReLU}(z) = \max(0, z)
+$$
+
+**3. Forward Pass:**
+
+To ensure that the ReLU activations work for the XOR problem, we will need to choose weights and biases that divide the space in a way that can be combined to represent the XOR function.
+
+For the hidden layer:
+
+$$
+W = \begin{bmatrix} 1 & -1 \\ -1 & 1 \end{bmatrix}
+$$
+
+$$
+c = \begin{bmatrix} 0 \\ 0 \end{bmatrix}
+$$
+
+For the output layer:
+
+$$
+w = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
+$$
+
+$$
+b = -0.5
+$$
+
+**4. Computing for each Input:**
+
+For input $x = [0, 0]$:
+
+Hidden layer outputs:
+
+$$
+h_1 = \text{ReLU}(0 \times 1 + 0 \times -1 + 0) = 0
+$$
+
+$$
+h_2 = \text{ReLU}(0 \times -1 + 0 \times 1 + 0) = 0
+$$
+
+Output layer:
+
+$$
+y = \text{ReLU}(0 \times 1 + 0 \times 1 - 0.5) = 0
+$$
+
+This matches the XOR output for [0, 0], which is 0.
+
+For the input $x = [0, 1]$:
+
+Hidden layer outputs:
+
+$$
+h_1 = \text{ReLU}(0 \times 1 + 1 \times -1 + 0) = 0
+$$
+
+$$
+h_2 = \text{ReLU}(0 \times -1 + 1 \times 1 + 0) = 1
+$$
+
+Output layer:
+
+$$
+y = \text{ReLU}(0 \times 1 + 1 \times 1 - 0.5) = 0.5
+$$
+
+For XOR, we can threshold the output at $0.5$, such that $y \geq 0.5$ outputs 1, else outputs 0. Following this thresholding, the output is 1, matching the XOR for [0, 1].
+
+Similarly, you can compute the outputs for the other inputs $[1, 0]$ and $[1, 1]$, and they will match the expected XOR outputs with threshold at 0.5.
+
+A quick Python program to prove this out:
+
+```python
+import numpy as np
+
+
+def relu(z):
+    return max(0, z)
+
+
+def forward_pass(x):
+    # Hidden Layer
+    W = np.array([[1, -1], [-1, 1]])
+    c = np.array([0, 0])
+    h = np.vectorize(relu)(np.dot(x, W) + c)
+
+    # Output Layer
+    w = np.array([1, 1])
+    b = -0.5
+    y = relu(np.dot(h, w) + b)
+
+    # Thresholding at 0.5 for XOR
+    if y >= 0.5:
+        return 1
+    else:
+        return 0
+
+
+inputs = [[0, 0], [0, 1], [1, 0], [1, 1]]
+outputs = []
+
+for x in inputs:
+    outputs.append(forward_pass(x))
+
+print("Inputs:", inputs)
+print("Outputs:", outputs)
+
+```
+
+Outputs:
+
+```
+Inputs: [[0, 0], [0, 1], [1, 0], [1, 1]]
+Outputs: [0, 1, 1, 0]
+```
