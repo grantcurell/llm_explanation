@@ -31,6 +31,7 @@
     - [Using Rectified Linear Units (ReLU)](#using-rectified-linear-units-relu)
   - [Math for FFN](#math-for-ffn)
   - [Decoder Attention Heads](#decoder-attention-heads)
+- [Random Mentions](#random-mentions)
 
 
 
@@ -79,11 +80,7 @@ Let's assume you have a word embedding model that maps each word in the sentence
     - The vectors are stacked to form the input matrix \(X\):
 
 $$
-X = \begin{pmatrix}
-0.1 & 0.2 & -0.1 & 0.4 \\\\
--0.3 & 0.5 & 0.1 & -0.2 \\\\
-0.4 & -0.3 & 0.2 & 0.1
-\end{pmatrix}
+X = \begin{pmatrix} 0.1 & 0.2 & -0.1 & 0.4 \\\ -0.3 & 0.5 & 0.1 & -0.2 \\\ 0.4 & -0.3 & 0.2 & 0.1 \end{pmatrix}
 $$
 
 This \(X\) matrix serves as the input to the neural network, and each row corresponds to the embedding of a word in the sentence "You are welcome". 
@@ -211,16 +208,7 @@ $$ Y + PE_{\text{output}} = \begin{pmatrix} 0.0 & 1.0 & 0.0 & 1.0 \\\ 0.6415 & 1
 Adding position encodings to $Y$:
 
 $$
-Y + PE_{\text{output}} = \begin{pmatrix}
-0.0 + 0 & 0.0 + 1 & 0.0 + 0 & 0.0 + 1 \\\\
--0.2 + 0.8415 & 0.4 + 0.99995 & 0.3 + 0.0001 & 0.1 + 1 \\\\
-0.5 + 0.9093 & -0.1 + 0.9998 & -0.4 + 0.0002 & 0.3 + 1
-\end{pmatrix}
-= \begin{pmatrix}
-0.0 & 1.0 & 0.0 & 1.0 \\\\
-0.6415 & 1.39995 & 0.3001 & 1.1 \\\\
-1.4093 & 0.8998 & -0.3998 & 1.3
-\end{pmatrix}
+Y + PE_{\text{output}} = \begin{pmatrix} 0.0 + 0 & 0.0 + 1 & 0.0 + 0 & 0.0 + 1 \\\ -0.2 + 0.8415 & 0.4 + 0.99995 & 0.3 + 0.0001 & 0.1 + 1 \\\ 0.5 + 0.9093 & -0.1 + 0.9998 & -0.4 + 0.0002 & 0.3 + 1 \end{pmatrix} = \begin{pmatrix} 0.0 & 1.0 & 0.0 & 1.0 \\\ 0.6415 & 1.39995 & 0.3001 & 1.1 \\\ 1.4093 & 0.8998 & -0.3998 & 1.3 \end{pmatrix}
 $$
 
 These new matrices incorporate both the embeddings and the position information, and they will be used as input to subsequent layers of the Transformer model. One more thing you should take from this is that the contents of the input are independent of the position embedding. The only thing that matters is the position of the word for the position embedding. What we now have is a matrix that contains information on both the relationships of the word and its position in the sentence.
@@ -249,6 +237,10 @@ At a high level this is what each component does:
 
 #### Self Attention
 
+![](images/2023-11-02-17-49-58.png)
+
+[Image source](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
+
 The purpose of the self attention portion of the algorithm is explained fantastically in [this paper by Troy Wang](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=11).
 
 > Self-attention is one of the key differentiating characteristics of the transformer model. It is a
@@ -276,6 +268,11 @@ The actual math of this is a bit confusing so I found it was best to read it fir
 > Although we described the process in terms of vectors, in practice it is implemented by means of matrices. This is because the computation process for each vector independent and identical. We would stack our input embeddings as rows in an input matrix, multiply this matrix with learned weight matrices $W_Q$, $W_K$, $W_V$ and get $(Q)$, $(K)$, and $(V)$ vectors respectively, feed the three resulting matrices into the softmax function as:
 >
 > $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) \times V$$
+>
+
+![](images/2023-11-02-17-52-47.png)
+
+[Image source](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
 
 Ok, let's start with explaining what exactly are Q, K, and V because that wasn't immediately obvious to me when I read Wang's paper.
 
@@ -616,6 +613,12 @@ I don't show the breakdown of applying the formula here but what really matters 
 
 $$ \text{LN}(x_i) = \begin{pmatrix} -1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\\ -0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\\ -1.10306273 & 0.02854757 & 1.58729045 & -0.51277529 \end{pmatrix} $$
 
+The whole process from beginning to end:
+
+![](images/2023-11-02-17-54-45.png)
+
+[Image Source](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
+
 #### Feed Forward Neural Net
 
 Finally we reach the feed forward network - the piece at the heart of most AI models. So much of AI is based on these things I think it's worth spending a bit of time explaining how they work.
@@ -718,7 +721,7 @@ $$\text{FFN}(x)=\begin{pmatrix} 1.70355949 & 4.58680433 & 7.47004916 & 10.353294
 
 Now we rerun layer normalization against that result using [exactly the same process as before](#layer-normalization) for the final output of our encoder.
 
-$$\begin{pmatrix} -1.34164072 & -0.44721357 & 0.44721357 & 1.34164072 \\\ -1.34164071 & -0.44721357 & 0.44721357 & 1.34164071 \\\ -1.34164075 & -0.44721358 & 0.44721358 & 1.34164075 \end{pmatrix}$$
+$$\text{LN}(x_o) = \begin{pmatrix} -1.34164072 & -0.44721357 & 0.44721357 & 1.34164072 \\\ -1.34164071 & -0.44721357 & 0.44721357 & 1.34164071 \\\ -1.34164075 & -0.44721358 & 0.44721358 & 1.34164075 \end{pmatrix}$$
 
 Our resulting columns are coincidentally the same because the FNN values are scalar multiples ($\times 3$) due to the way I arbitrarily set this up. This wouldn't happen in the scope of billions of variables.
 
@@ -730,17 +733,30 @@ Recall, this is the overview of our decoder process.
 
 [Source Image here](https://towardsdatascience.com/transformers-explained-visually-part-2-how-it-works-step-by-step-b49fa4a64f34)
 
+From [this article](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853)
+
+> Coming to the Decoder stack, the target sequence is fed to the Output Embedding and Position Encoding, which produces an encoded representation for each word in the target sequence that captures the meaning and position of each word. This is fed to all three parameters, Query, Key, and Value in the Self-Attention in the first Decoder which then also produces an encoded representation for each word in the target sequence, which now incorporates the attention scores for each word as well. After passing through the Layer Norm, this is fed to the Query parameter in the Encoder-Decoder Attention in the first Decoder
+
 The first thing we have to do is take out [output embedding](#output-embedding--de-nada) and calculate [self attention](#self-attention) on it just as we did for the [input embedding](#input-embedding-you-are-welcome). Our output embedding was:
 
-$$ PE_{\text{output}} = \begin{pmatrix} 0 & 1 & 0 & 1 \\\ \sin\left(\frac{1}{10000^0}\right) & \cos\left(\frac{1}{10000^{0.5}}\right) & \sin\left(\frac{1}{10000^2}\right) & \cos\left(\frac{1}{10000^{2.5}}\right) \\\ \sin\left(\frac{2}{10000^0}\right) & \cos\left(\frac{2}{10000^{0.5}}\right) & \sin\left(\frac{2}{10000^2}\right) & \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} = \begin{pmatrix} 0 & 1 & 0 & 1 \\\ 0.8415 & 0.99995 & 0.0001 & 1 \\\ 0.9093 & 0.9998 & 0.0002 & 1 \end{pmatrix} $$
+$$
+Y + PE_{\text{output}} = \begin{pmatrix} 0.0 + 0 & 0.0 + 1 & 0.0 + 0 & 0.0 + 1 \\\ -0.2 + 0.8415 & 0.4 + 0.99995 & 0.3 + 0.0001 & 0.1 + 1 \\\ 0.5 + 0.9093 & -0.1 + 0.9998 & -0.4 + 0.0002 & 0.3 + 1 \end{pmatrix} = \begin{pmatrix} 0.0 & 1.0 & 0.0 & 1.0 \\\ 0.6415 & 1.39995 & 0.3001 & 1.1 \\\ 1.4093 & 0.8998 & -0.3998 & 1.3 \end{pmatrix}
+$$
 
 The math for the attention head on the decoder is the same as it was for [the input stack](#self-attention) so I do not show it here. The Python I used to generate the example is [here](#decoder-attention-heads). The result of the process is:
 
-$$\text{Attention}_2(Q, K, V) = \begin{pmatrix} 0.94712585 & 1.04221558 \\\ 0.96186018 & 1.06762469 \\\ 0.96283876 & 1.06931224 \end{pmatrix}$$
+$$\text{Attention}_2(Q, K, V) = \begin{pmatrix} 2.82896639 & 2.49151229 & 3.27935978 & 3.36785616 \\\ 2.93697775 & 2.57919015 & 3.42996786 & 3.49210994 \\\ 2.95810782 & 2.60399936 & 3.43836135 & 3.51718943 \end{pmatrix}$$
 
-Likewise, the math
+Likewise, the math for layer normalization remains the same as it was [for the input](#calculate-layer-normalization). The result here is:
+
+$$\text{LN}(x_o) = \begin{pmatrix} -0.46049196 & -1.4140849 & 0.81224991 & 1.06232694 \\\ -0.46121408 & -1.41736871 & 0.85625689 & 1.02232591 \\\ -0.46146504 & -1.41536061 & 0.83223948 & 1.04458616 \end{pmatrix}$$
 
 ### Decoder Stack Processing with Encoder Output
+
+The [same post](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853) describes the encoder-decoder attention block.
+
+> The Encoder-Decoder Attention takes its input from two sources. Therefore, unlike the Encoder Self-Attention, which computes the interaction between each input word with other input words, and Decoder Self-Attention which computes the interaction between each target word with other target words, the Encoder-Decoder Attention computes the interaction between each target word with each input word.
+
 ### Output Layer for Word Probabilities
 ### Loss Function and Back-Propagation
 
@@ -1598,57 +1614,63 @@ I used this code to generate the results for the decoder attention heads.
 ```python
 import numpy as np
 
-# Set seed for reproducibility
-np.random.seed(42)
+# Define the position encoding matrix for the output
+PE_output = np.array([[0.0, 1.0, 0.0, 1.0],
+                      [0.6415, 1.39995, 0.3001, 1.1],
+                      [1.4093, 0.8998, -0.3998, 1.3]])
 
+# Generate random matrices for weights
+np.random.seed(42)  # Setting seed for reproducibility
+d_model = 4  # The dimensionality of the input and output
+d_k = d_model
+d_v = d_model
 
-def self_attention(PE_output, d_k=2):
-    # Fixed weights for Q, K, V using random values
-    W_q = np.random.rand(4, d_k)
-    W_k = np.random.rand(4, d_k)
-    W_v = np.random.rand(4, d_k)
+W_q = np.random.rand(d_model, d_k)
+W_k = np.random.rand(d_model, d_k)
+W_v = np.random.rand(d_model, d_v)
+W_o = np.random.rand(d_k, d_model)
 
-    # Compute Q, K, V matrices
-    Q = PE_output @ W_q
-    K = PE_output @ W_k
-    V = PE_output @ W_v
+# Compute Q, K, V matrices
+Q = PE_output @ W_q
+K = PE_output @ W_k
+V = PE_output @ W_v
 
-    # Compute attention scores
-    scores = (Q @ K.T) / np.sqrt(d_k)
+# Compute the attention weights
+attention_weights = np.exp(Q @ K.T) / np.sum(np.exp(Q @ K.T), axis=-1, keepdims=True)
 
-    # Apply softmax to scores
-    attention_probs = np.exp(scores) / np.sum(np.exp(scores), axis=-1, keepdims=True)
+# Compute the output of the self-attention mechanism
+output = attention_weights @ V
 
-    # Multiply the attention probabilities with V
-    attention_output = attention_probs @ V
+# Project the output back to the original dimensionality
+output = output @ W_o
 
-    return attention_output
+# Layer Normalization
+mean = np.mean(output, axis=-1, keepdims=True)
+std = np.std(output, axis=-1, keepdims=True)
+eps = 1e-6
+normalized_output = (output - mean) / (std + eps)
 
+print("Self Attention Output:")
+print(output)
 
-def layer_norm(matrix):
-    mean = matrix.mean(axis=1, keepdims=True)
-    std_dev = matrix.std(axis=1, keepdims=True)
-    epsilon = 1e-5
-    normalized_matrix = (matrix - mean) / (std_dev + epsilon)
-    return normalized_matrix
+print("\nLayer Normalized Output:")
+print(normalized_output)
+```
 
-
-# Position-embedded sequence
-PE_output = np.array([
-    [0, 1, 0, 1],
-    [0.8415, 0.99995, 0.0001, 1],
-    [0.9093, 0.9998, 0.0002, 1]
-])
-
-# Self attention computation
-attention_result = self_attention(PE_output)
-print("Self Attention Result:")
-print(attention_result)
-
-# Layer normalization
-normalized_result = layer_norm(attention_result)
-print("\nLayer Normalized Result:")
-print(normalized_result)
-
+Output:
 
 ```
+Self Attention Output:
+[[2.82896639 2.49151229 3.27935978 3.36785616]
+ [2.93697775 2.57919015 3.42996786 3.49210994]
+ [2.95810782 2.60399936 3.43836135 3.51718943]]
+
+Layer Normalized Output:
+[[-0.46049196 -1.4140849   0.81224991  1.06232694]
+ [-0.46121408 -1.41736871  0.85625689  1.02232591]
+ [-0.46146504 -1.41536061  0.83223948  1.04458616]]
+```
+
+## Random Mentions
+
+- Embedding Size — width of the embedding vector (we use a width of 6 in our example). This dimension is carried forward throughout the Transformer model and hence is sometimes referred to by other names like ‘model size’ etc.
