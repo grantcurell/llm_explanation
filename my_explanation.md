@@ -644,7 +644,7 @@ There is an example of how XOR works [here](#xor-example).
 
 So taking it to our example. Given we start with this output from the layer normalization:
 
-$$\text{LN}(x_i) = \begin{pmatrix} -1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\ -0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\ -1.10306273 & 0.02854757 & 1.58729045 & -0.51277529 \end{pmatrix}$$
+$$ \text{LN}(x_i) = \begin{pmatrix} -1.03927142 & 0.13949668 & 1.56694829 & -0.66717355 \\\ -0.97825977 & 0.09190721 & 1.59246789 & -0.70611533 \\\ -1.10306273 & 0.02854757 & 1.58729045 & -0.51277529 \end{pmatrix} $$
 
 Now, let's pass this through a simple FFNN. We will assume:
 
@@ -658,11 +658,11 @@ Given this:
 
 Let's randomly initialize these parameters for the demonstration:
 
-$$W_1 = \begin{pmatrix} 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 \\ 0.7 & 0.8 & 0.9 & 1.0 & 1.1 & 1.2 \\ 1.3 & 1.4 & 1.5 & 1.6 & 1.7 & 1.8 \\ 1.9 & 2.0 & 2.1 & 2.2 & 2.3 & 2.4 \end{pmatrix}$$
+$$W_1 = \begin{pmatrix} 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 \\\ 0.7 & 0.8 & 0.9 & 1.0 & 1.1 & 1.2 \\\ 1.3 & 1.4 & 1.5 & 1.6 & 1.7 & 1.8 \\\ 1.9 & 2.0 & 2.1 & 2.2 & 2.3 & 2.4 \end{pmatrix}$$
 
-$$b_1 = \begin{pmatrix} 0.01 \\ 0.02 \\ 0.03 \\ 0.04 \\ 0.05 \\ 0.06 \end{pmatrix}$$
+$$b_1 = \begin{pmatrix} 0.01 \\\ 0.02 \\\ 0.03 \\\ 0.04 \\\ 0.05 \\\ 0.06 \end{pmatrix}$$
 
-$$W_2 = \begin{pmatrix} 0.1 & 0.7 & 1.3 & 1.9 \\ 0.2 & 0.8 & 1.4 & 2.0 \\ 0.3 & 0.9 & 1.5 & 2.1 \\ 0.4 & 1.0 & 1.6 & 2.2 \\ 0.5 & 1.1 & 1.7 & 2.3 \\ 0.6 & 1.2 & 1.8 & 2.4 \end{pmatrix}$$
+$$W_2 = \begin{pmatrix} 0.1 & 0.7 & 1.3 & 1.9 \\\ 0.2 & 0.8 & 1.4 & 2.0 \\\ 0.3 & 0.9 & 1.5 & 2.1 \\\ 0.4 & 1.0 & 1.6 & 2.2 \\\ 0.5 & 1.1 & 1.7 & 2.3 \\\ 0.6 & 1.2 & 1.8 & 2.4 \end{pmatrix}$$
 
 $$b_2 = \begin{pmatrix} 0.01 & 0.02 & 0.03 & 0.04 \end{pmatrix}$$
 
@@ -749,7 +749,7 @@ $$
 $$
 
 $$
-\text{softmax}(x)_i = \frac{e^{x_i}}{\sum_{j=1}^{3} e^{x_j}}
+\text{softmax}(x)_i = \frac{e^{x_i}}{{\sum e^{x_j}}}
 $$
 
 For each component:
