@@ -29,6 +29,8 @@
   - [Plot XOR](#plot-xor)
   - [XOR Example](#xor-example)
     - [Using Rectified Linear Units (ReLU)](#using-rectified-linear-units-relu)
+  - [Math for FFN](#math-for-ffn)
+  - [Decoder Attention Heads](#decoder-attention-heads)
 
 
 
@@ -640,7 +642,44 @@ As the Deep Learning book points out, there isn't even a way to approximate some
 
 ![](images/2023-11-01-09-01-39.png)
 
-There is an example of how XOR works [here](#xor-example).
+There is an example of [how an XOR model works](#xor-example).
+
+Going back to the paper from [Troy Wang](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=14)
+
+> Feed-Forward Neural Net feeds its output, an $n$ by 1 vector for each input token where $n$ is the dimension of the embedding, to the neural network layer. Each neural network layer consists of two pretrained matrices, the first one having dimension $n \times 4n$, and the second $4n \times n$. The input vector relayed from the self-attention layer is first multiplied with the first matrix in the neural network $W1$, resulting in a $(1 \times 4n)$ matrix, which is then multiplied with the second matrix $W2$, resulting in a $(1 \times n)$ matrix. This is equivalent to a vector with dimension $n$, which is uncoincidentally the same as the original input of the neural network. Note that the hyperparameter of 4 is rather arbitrary. The developers of the transformer model did not explain the reason for picking this particular hyperparameter [VSP+17].
+>
+> Below is the formal representation of the feed-forward neural network that we just discussed. Note that there is also a ReLU activation in between the two multiplications.
+> 
+> $FFN(x) = max(0, xW1 + b1) W2 + b2$
+>
+> This transformation is the same across different positions in the same layer, yet each layer has its own unique parameters [VSP+17].
+
+
+
+Let's walk through what that means in terms of our case.
+
+1. **Input Vector Dimension $(n \times 1)$**: 
+    - In the Transformer model, for each token, the output from the self-attention layer is a vector of dimension $n$, which is fed into the FFNN layer.
+    - In our [layer normalization](#layer-normalization) example, each row represents a token and the number of columns represents the dimensionality ($n=4$).
+
+2. **First Matrix $(n \times 4n)$**: 
+    - This expansion of dimensions by a factor of 4 is specific to the Transformer's FFNN layer. It's a design choice, and while there's no explicit reasoning in the original paper, it can be thought of as allowing the network more capacity to combine features before projecting them back to the original size.
+    - In our example, we expanded to 6 dimensions just for demonstration. In the Transformer, it would be 16 (4 times 4).
+
+3. **ReLU Activation**: 
+    - After multiplying by the first matrix $W_1$ and adding the bias $b_1$, a ReLU (Rectified Linear Unit) activation function is applied element-wise. This introduces non-linearity, which is essential for the network to model complex patterns.
+    - This was demonstrated in our example as well with the line `a1 = np.maximum(0, z1)`
+
+4. **Second Matrix $(4n \times n)$**:
+    - The activated output from the previous step is then multiplied by a second matrix $W_2$ to bring the dimension back to $n$.
+    - In our example, this was done to bring it back to 4 dimensions. In the Transformer, it would bring it back to the original size of the embeddings.
+
+5. **Result**: 
+    - The output is again a vector with dimension $n$ for each input token, ready to be processed by subsequent layers or to produce final outputs.
+    - This matches with the example where our final matrix $z2$ had rows with 4 dimensions, just like our original input.
+
+6. **Layer-Wise Unique Parameters**:
+    - The FFNN layers across positions share parameters, meaning every token goes through the same FFNN transformation within a single layer. However, each FFNN in different Transformer layers has its own set of parameters, allowing it to learn different transformations at different depths of the network.
 
 So taking it to our example. Given we start with this output from the layer normalization:
 
@@ -653,8 +692,8 @@ Now, let's pass this through a simple FFNN. We will assume:
 
 Given this:
 
-1. The weight matrices will be \( W_1 \) of size [4x6] and \( W_2 \) of size [6x4].
-2. The bias vectors will be \( b_1 \) of size [6] and \( b_2 \) of size [4].
+1. The weight matrices will be $W_1$ of size $[4 \times 6]$ and $W_2$ of size $[6 \times 4]$.
+2. The bias vectors will be $b_1$ of size $[6]$ and $b_2$ of size $[4]$.
 
 Let's randomly initialize these parameters for the demonstration:
 
@@ -664,7 +703,7 @@ $$b_1 = \begin{pmatrix} 0.01 \\\ 0.02 \\\ 0.03 \\\ 0.04 \\\ 0.05 \\\ 0.06 \end{p
 
 $$W_2 = \begin{pmatrix} 0.1 & 0.7 & 1.3 & 1.9 \\\ 0.2 & 0.8 & 1.4 & 2.0 \\\ 0.3 & 0.9 & 1.5 & 2.1 \\\ 0.4 & 1.0 & 1.6 & 2.2 \\\ 0.5 & 1.1 & 1.7 & 2.3 \\\ 0.6 & 1.2 & 1.8 & 2.4 \end{pmatrix}$$
 
-$$b_2 = \begin{pmatrix} 0.01 & 0.02 & 0.03 & 0.04 \end{pmatrix}$$
+$$b_2 = \begin{pmatrix} 0.01 \\\ 0.02 \\\ 0.03 \\\ 0.04 \end{pmatrix}$$
 
 Applying the FFNN:
 
@@ -673,8 +712,34 @@ Applying the FFNN:
 3. Second linear transformation: $z_2 = a_1 \times W_2 + b_2$
 4. Final output $z_2$ will be of size [3x4] representing the transformed data.
 
+When you [run this process through Python](#math-for-ffn) you get:
+
+$$\text{FFN}(x)=\begin{pmatrix} 1.70355949 & 4.58680433 & 7.47004916 & 10.353294 \\\ 1.56070622 & 4.19905974 & 6.83741326 & 9.47576678 \\\ 2.19865128 & 5.93062489 & 9.66259851 & 13.39457212 \end{pmatrix}$$
+
+Now we rerun layer normalization against that result using [exactly the same process as before](#layer-normalization) for the final output of our encoder.
+
+$$\begin{pmatrix} -1.34164072 & -0.44721357 & 0.44721357 & 1.34164072 \\\ -1.34164071 & -0.44721357 & 0.44721357 & 1.34164071 \\\ -1.34164075 & -0.44721358 & 0.44721358 & 1.34164075 \end{pmatrix}$$
+
+Our resulting columns are coincidentally the same because the FNN values are scalar multiples ($\times 3$) due to the way I arbitrarily set this up. This wouldn't happen in the scope of billions of variables.
 
 ### Prepare and Embed Target Sequence for Decoder
+
+Recall, this is the overview of our decoder process.
+
+![](images/2023-11-02-16-49-18.png)
+
+[Source Image here](https://towardsdatascience.com/transformers-explained-visually-part-2-how-it-works-step-by-step-b49fa4a64f34)
+
+The first thing we have to do is take out [output embedding](#output-embedding--de-nada) and calculate [self attention](#self-attention) on it just as we did for the [input embedding](#input-embedding-you-are-welcome). Our output embedding was:
+
+$$ PE_{\text{output}} = \begin{pmatrix} 0 & 1 & 0 & 1 \\\ \sin\left(\frac{1}{10000^0}\right) & \cos\left(\frac{1}{10000^{0.5}}\right) & \sin\left(\frac{1}{10000^2}\right) & \cos\left(\frac{1}{10000^{2.5}}\right) \\\ \sin\left(\frac{2}{10000^0}\right) & \cos\left(\frac{2}{10000^{0.5}}\right) & \sin\left(\frac{2}{10000^2}\right) & \cos\left(\frac{2}{10000^{2.5}}\right) \end{pmatrix} = \begin{pmatrix} 0 & 1 & 0 & 1 \\\ 0.8415 & 0.99995 & 0.0001 & 1 \\\ 0.9093 & 0.9998 & 0.0002 & 1 \end{pmatrix} $$
+
+The math for the attention head on the decoder is the same as it was for [the input stack](#self-attention) so I do not show it here. The Python I used to generate the example is [here](#decoder-attention-heads). The result of the process is:
+
+$$\text{Attention}_2(Q, K, V) = \begin{pmatrix} 0.94712585 & 1.04221558 \\\ 0.96186018 & 1.06762469 \\\ 0.96283876 & 1.06931224 \end{pmatrix}$$
+
+Likewise, the math
+
 ### Decoder Stack Processing with Encoder Output
 ### Output Layer for Word Probabilities
 ### Loss Function and Back-Propagation
@@ -1444,4 +1509,146 @@ Outputs:
 ```
 Inputs: [[0, 0], [0, 1], [1, 0], [1, 1]]
 Outputs: [0, 1, 1, 0]
+```
+
+### Math for FFN
+
+```python
+import numpy as np
+
+# Layer Normalized Data
+LN_xi = np.array([
+    [-1.03927142, 0.13949668, 1.56694829, -0.66717355],
+    [-0.97825977, 0.09190721, 1.59246789, -0.70611533],
+    [-1.10306273, 0.02854757, 1.58729045, -0.51277529]
+])
+
+# Parameters
+W1 = np.array([
+    [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+    [0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6, 1.7, 1.8],
+    [1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
+])
+
+b1 = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
+
+W2 = np.array([
+    [0.1, 0.7, 1.3, 1.9],
+    [0.2, 0.8, 1.4, 2.0],
+    [0.3, 0.9, 1.5, 2.1],
+    [0.4, 1.0, 1.6, 2.2],
+    [0.5, 1.1, 1.7, 2.3],
+    [0.6, 1.2, 1.8, 2.4]
+])
+
+b2 = np.array([0.01, 0.02, 0.03, 0.04])
+
+# First linear transformation
+z1 = np.dot(LN_xi, W1) + b1
+
+# Apply ReLU activation
+a1 = np.maximum(0, z1)
+
+# Second linear transformation
+z2 = np.dot(a1, W2) + b2
+
+print(z2)
+```
+
+If you want to see the first row, first column calculated separately:
+
+```python
+import numpy as np
+
+# Layer Normalized Data for the first row
+LN_xi_row1 = np.array([-1.03927142, 0.13949668, 1.56694829, -0.66717355])
+
+# Parameters
+W1 = np.array([
+    [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+    [0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6, 1.7, 1.8],
+    [1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
+])
+
+b1 = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
+
+W2_col1 = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+
+b2_col1 = 0.01
+
+# First linear transformation for the first row
+z1_row1 = np.dot(LN_xi_row1, W1) + b1
+
+# Apply ReLU activation for the first row
+a1_row1 = np.maximum(0, z1_row1)
+
+# Second linear transformation for the first column
+z2_row1_col1 = np.dot(a1_row1, W2_col1) + b2_col1
+
+print(z2_row1_col1)
+
+```
+
+### Decoder Attention Heads
+
+I used this code to generate the results for the decoder attention heads.
+
+```python
+import numpy as np
+
+# Set seed for reproducibility
+np.random.seed(42)
+
+
+def self_attention(PE_output, d_k=2):
+    # Fixed weights for Q, K, V using random values
+    W_q = np.random.rand(4, d_k)
+    W_k = np.random.rand(4, d_k)
+    W_v = np.random.rand(4, d_k)
+
+    # Compute Q, K, V matrices
+    Q = PE_output @ W_q
+    K = PE_output @ W_k
+    V = PE_output @ W_v
+
+    # Compute attention scores
+    scores = (Q @ K.T) / np.sqrt(d_k)
+
+    # Apply softmax to scores
+    attention_probs = np.exp(scores) / np.sum(np.exp(scores), axis=-1, keepdims=True)
+
+    # Multiply the attention probabilities with V
+    attention_output = attention_probs @ V
+
+    return attention_output
+
+
+def layer_norm(matrix):
+    mean = matrix.mean(axis=1, keepdims=True)
+    std_dev = matrix.std(axis=1, keepdims=True)
+    epsilon = 1e-5
+    normalized_matrix = (matrix - mean) / (std_dev + epsilon)
+    return normalized_matrix
+
+
+# Position-embedded sequence
+PE_output = np.array([
+    [0, 1, 0, 1],
+    [0.8415, 0.99995, 0.0001, 1],
+    [0.9093, 0.9998, 0.0002, 1]
+])
+
+# Self attention computation
+attention_result = self_attention(PE_output)
+print("Self Attention Result:")
+print(attention_result)
+
+# Layer normalization
+normalized_result = layer_norm(attention_result)
+print("\nLayer Normalized Result:")
+print(normalized_result)
+
+
 ```
