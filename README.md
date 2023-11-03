@@ -1,59 +1,61 @@
 
-- [Overview](#overview)
-- [How Transformers Work](#how-transformers-work)
-  - [1 - Input Sequence to Encoder Embeddings](#1---input-sequence-to-encoder-embeddings)
-  - [1.5 Position Encoding](#15-position-encoding)
-    - [Input Embedding: "You are welcome"](#input-embedding-you-are-welcome)
-    - [Output Embedding: " de nada"](#output-embedding--de-nada)
-    - [Adding Them Together](#adding-them-together)
-  - [Encoder Stack Processing](#encoder-stack-processing)
-    - [Self Attention](#self-attention)
-      - [A Concrete Example](#a-concrete-example)
-    - [Attention Heads and Multi Attention Heads](#attention-heads-and-multi-attention-heads)
-    - [Layer Normalization](#layer-normalization)
-    - [Feed Forward Neural Net](#feed-forward-neural-net)
-  - [Prepare and Embed Target Sequence for Decoder](#prepare-and-embed-target-sequence-for-decoder)
-  - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
-  - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
-  - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
-- [Generative Pre-Trained Transformer (GPT)](#generative-pre-trained-transformer-gpt)
-  - [What's so different about GPT models?](#whats-so-different-about-gpt-models)
-  - [Going Through an Example](#going-through-an-example)
-    - [Input Representation:](#input-representation)
-    - [Embedding and Positional Encoding:](#embedding-and-positional-encoding)
-    - [Masked Self-Attention:](#masked-self-attention)
-    - [Feed Forward and Layer Norm:](#feed-forward-and-layer-norm)
-    - [Output](#output)
-  - [Training](#training)
-  - [GPT Time Complexity](#gpt-time-complexity)
-- [Supplemental Information](#supplemental-information)
-  - [Word Embeddings](#word-embeddings)
-  - [Weight Matrices](#weight-matrices)
-  - [Softmax](#softmax)
-  - [Matrix Multiplication](#matrix-multiplication)
-    - [Calculating Y](#calculating-y)
-  - [Calculate Attention Score](#calculate-attention-score)
-  - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
-  - [Calculate Layer Normalization](#calculate-layer-normalization)
-  - [Linear Regression Code](#linear-regression-code)
-  - [Plot XOR](#plot-xor)
-  - [XOR Example](#xor-example)
-    - [Using Rectified Linear Units (ReLU)](#using-rectified-linear-units-relu)
-  - [Math for FFN](#math-for-ffn)
-  - [Decoder Attention Heads](#decoder-attention-heads)
-  - [Calculate Encoder-Decoder Output](#calculate-encoder-decoder-output)
-  - [What is Cross Entropy Loss](#what-is-cross-entropy-loss)
+# The Math Behind GPT Models
+
+- [The Math Behind GPT Models](#the-math-behind-gpt-models)
+  - [Overview](#overview)
+  - [How Transformers Work](#how-transformers-work)
+    - [1 - Input Sequence to Encoder Embeddings](#1---input-sequence-to-encoder-embeddings)
+    - [1.5 Position Encoding](#15-position-encoding)
+      - [Input Embedding: "You are welcome"](#input-embedding-you-are-welcome)
+      - [Output Embedding: " de nada"](#output-embedding--de-nada)
+      - [Adding Them Together](#adding-them-together)
+    - [Encoder Stack Processing](#encoder-stack-processing)
+      - [Self Attention](#self-attention)
+        - [A Concrete Example](#a-concrete-example)
+      - [Attention Heads and Multi Attention Heads](#attention-heads-and-multi-attention-heads)
+      - [Layer Normalization](#layer-normalization)
+      - [Feed Forward Neural Net](#feed-forward-neural-net)
+    - [Prepare and Embed Target Sequence for Decoder](#prepare-and-embed-target-sequence-for-decoder)
+    - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
+    - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
+    - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
+  - [Generative Pre-Trained Transformer (GPT)](#generative-pre-trained-transformer-gpt)
+    - [What's so different about GPT models?](#whats-so-different-about-gpt-models)
+    - [Going Through an Example](#going-through-an-example)
+      - [Input Representation:](#input-representation)
+      - [Embedding and Positional Encoding:](#embedding-and-positional-encoding)
+      - [Masked Self-Attention:](#masked-self-attention)
+      - [Feed Forward and Layer Norm:](#feed-forward-and-layer-norm)
+      - [Output](#output)
+    - [Training](#training)
+    - [GPT Time Complexity](#gpt-time-complexity)
+  - [Supplemental Information](#supplemental-information)
+    - [Word Embeddings](#word-embeddings)
+    - [Weight Matrices](#weight-matrices)
+    - [Softmax](#softmax)
+    - [Matrix Multiplication](#matrix-multiplication)
+      - [Calculating Y](#calculating-y)
+    - [Calculate Attention Score](#calculate-attention-score)
+    - [Calculate Multi-Attention Head Output](#calculate-multi-attention-head-output)
+    - [Calculate Layer Normalization](#calculate-layer-normalization)
+    - [Linear Regression Code](#linear-regression-code)
+    - [Plot XOR](#plot-xor)
+    - [XOR Example](#xor-example)
+      - [Using Rectified Linear Units (ReLU)](#using-rectified-linear-units-relu)
+    - [Math for FFN](#math-for-ffn)
+    - [Decoder Attention Heads](#decoder-attention-heads)
+    - [Calculate Encoder-Decoder Output](#calculate-encoder-decoder-output)
+    - [What is Cross Entropy Loss](#what-is-cross-entropy-loss)
 
 
 ## Overview
 
-The purpose of this whitepaper is to explain at a low level how LLMs work such that we can make informed decisions about their performance and architectural decisions.
-
-It draws on the following as sources
+The purpose of this whitepaper is to explain at a low level how LLMs work such that we can make informed decisions about their performance and architectural decisions. I had trouble finding a single source that walked through all the pieces at a sufficient level of detail so this is more a literature review that further explains the following:
 
 - [GPT: Origin, Theory, Application, and Future](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=14)
 - [The Deep Learning Book](https://www.deeplearningbook.org/)
 - [Transformers Explained Visually](https://towardsdatascience.com/transformers-explained-visually-part-1-overview-of-functionality-95a6dd460452)
+- [Google's Original Paper - Attention is All You Need](https://arxiv.org/abs/1706.03762)
 
 ## How Transformers Work
 
@@ -1117,6 +1119,7 @@ This is what the GPT model in contrast to what we saw in the original transforme
 #### Input Representation:
 
 Suppose we have a sentence: "I love AI," which we tokenize as $["I", "love", "AI"]$. Here are our randomly selected embeddings:
+
 $$ U = \{ \text{"I"}: [0.12, 0.87], \text{"love"}: [0.56, 0.32], \text{"AI"}: [0.74, 0.51] \} $$
 
 For our positional encoding matrix \(W_p\), we use:
