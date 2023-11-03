@@ -848,24 +848,117 @@ Ok, so we've talked through how we get output... but now how do we actually trai
 Let's first go through the process in broad terms.
 
 1. **Cross-Entropy Loss Calculation**:
-The transformer generates logits, which are the outputs of the model's final linear layer before applying the softmax function. These logits represent the unnormalized log probabilities of each word in the model's vocabulary. We then apply the softmax function to the logits to obtain a probability distribution over the vocabulary (predicted probabilities). Cross-entropy loss is then calculated between the predicted probabilities and the true distribution, which is typically represented as a one-hot encoded vector indicating the true next word in the sequence. For more on cross-entropy loss see [the supplemental information on it](#what-is-cross-entropy-loss)
+The transformer generates logits, which are the outputs of the model's final linear layer before applying the softmax function. These logits represent the unnormalized log probabilities of each word in the model's vocabulary. We then apply the softmax function to the logits to obtain a probability distribution over the vocabulary (predicted probabilities). Cross-entropy loss is then calculated between the predicted probabilities and the true distribution, which is typically represented as a one-hot encoded vector indicating the true next word in the sequence.
 
-2. **Gradient Computation**:
+1. **Gradient Computation**:
 To improve the model, we need to know how to adjust the parameters to reduce the loss. This is done by computing the gradient of the loss with respect to each parameter. In the context of a transformer, this means calculating the derivatives of the loss with respect to each element in the weight matrices and biases throughout the network. The gradients indicate the direction in which we should adjust our parameters to reduce the loss; a positive gradient suggests that increasing the parameter would increase the loss, while a negative gradient suggests that increasing the parameter would decrease the loss.
 
-3. **Weight Update**:
+1. **Weight Update**:
 Once we have the gradients, we use them to update the model’s weights. This is done by subtracting a fraction of the gradient from the current weights. This fraction is determined by the learning rate—a hyperparameter that controls how big a step we take during optimization.
 
-4. **Backpropagation Through Time (BPTT)**:
+1. **Backpropagation Through Time (BPTT)**:
 Because transformers process sequences, we need to consider not just the immediate outputs but also how a change in weights affects the subsequent parts of the sequence. Backpropagation through time is a method of applying the chain rule to unroll the sequence and calculate the impact of weights on loss at each time step.
 
-5. **Iteration and Convergence**:
+1. **Iteration and Convergence**:
 This entire process is repeated for many iterations—each iteration is an opportunity to adjust the weights slightly to reduce the loss. Over many iterations, this process is designed to converge on a set of weights that minimizes the loss, making the model's predictions as accurate as possible.
 
-6. **Regularization and Optimization Techniques**:
+1. **Regularization and Optimization Techniques**:
 In practice, additional techniques such as dropout, layer normalization, and advanced optimizers like Adam or RMSprop are used to improve training stability, avoid overfitting, and ensure that the optimization process converges efficiently.
 
 Each of these steps is carefully monitored using validation sets to ensure that the model is learning generalizable patterns and not just memorizing the training data.
+
+Let's take a look at a concrete example.
+
+
+Let's look at a concrete example:
+
+Sure, let's consider a simple example involving a language model that is training to predict the next word in a sentence. Let's say our model's current task is to predict the word following "The cat sat on the ___."
+
+For simplicity, imagine our model's vocabulary only consists of four words: {mat, hat, bat, rat}, each represented by a one-hot encoded vector:
+
+- $\text{mat} = [1, 0, 0, 0]$
+- $\text{hat} = [0, 1, 0, 0]$
+- $\text{bat} = [0, 0, 1, 0]$
+- $\text{rat} = [0, 0, 0, 1]$
+
+The true next word in our training example is "mat", so the true probability distribution (one-hot encoded) for this example is:
+
+$$ y = [1, 0, 0, 0] $$
+
+Now, let's say our model predicts the probabilities for each word as follows:
+
+$$\begin{pmatrix} \text{mat} & \text{hat} & \text{bat} & \text{rat} \\ 0.7 & 0.1 & 0.1 & 0.1 \end{pmatrix}$$
+
+where .7 is the model's confidence that the next word is "mat".
+
+The predicted probability distribution is:
+
+$$ P = [0.7, 0.1, 0.1, 0.1] $$
+
+We then calculate the cross-entropy loss for this single example as:
+
+$$
+L = -\sum_{i=1}^4 y_i \log(p_i) \\
+L = -(1 \cdot \log(0.7) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1)) \\
+L = -(\log(0.7)) \\
+L \approx 0.357
+$$
+
+In this case, the loss is relatively low because the model's prediction was quite close to the true distribution, with a high probability assigned to the correct word "mat".
+
+If the model were very wrong, say it predicted:
+
+$$ P = [0.1, 0.1, 0.1, 0.7] $$
+
+The cross-entropy loss would then be:
+
+$$
+L = -\sum_{i=1}^4 y_i \log(p_i) \\
+L = -(1 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.7)) \\
+L = -(\log(0.1)) \\
+L \approx 2.303
+$$
+
+The loss is now much higher, reflecting the poor quality of the prediction. By backpropagating this loss and updating the model's weights accordingly, the model is trained to make better predictions over time.
+
+Let's say we wanted to fix that that second scenario. How do we do that? We do it with gradient descent. A real description of gradient descent is too long to describe here. The aforementioned [deep learning book](https://www.deeplearningbook.org/contents/ml.html) has a lengthy discussion on it.
+
+To compute the gradient of the cross-entropy loss with respect to the model's predictions (which are the inputs to the softmax function, the aforementioned logits), we need to differentiate the loss with respect to each logit for each class.
+
+Given the true distribution $y = [1, 0, 0, 0]$ and the model's predicted probabilities $P = [0.1, 0.1, 0.1, 0.7]$, the loss $L$ for this incorrect prediction was calculated as approximately 2.303.
+
+Now, we'll compute the gradient of $L$ with respect to the logits, which are the inputs to the softmax function that produced $P$.
+
+If $Z$ are the logits and $P$ is obtained by applying the softmax function to $Z$, then for the softmax output for class $i$, we have:
+
+$$P_i = \frac{e^{Z_i}}{\sum_{k=1}^{V} e^{Z_k}}$$
+
+The gradient of the cross-entropy loss $L$ with respect to the logits $Z$ can be simplified to:
+
+$$\frac{\partial L}{\partial Z_i} = P_i - y_i$$
+
+The expression represents the partial derivative of the cross-entropy loss function $L$ with respect to the logit $Z_i$ for class $i$. 
+
+Here's what's being differentiated:
+
+1. **Loss Function $L$**:
+   - The cross-entropy loss function measures the difference between the model's predicted probabilities for each class (given by the softmax function) and the actual distribution of the labels (typically a one-hot encoded vector in classification tasks). A single class here being a possible next word.
+
+2. **Logits $Z$**:
+   - The logits are the outputs of the model that are fed into the softmax function. They are the raw, unnormalized scores that the model believes each class deserves based on the input data.
+
+When we differentiate $L$ with respect to $Z_i$, we are calculating how a small change in the logit $Z_i$ for any class $i$ will affect the overall loss $L$. This gradient is crucial because it provides the information needed to adjust the model parameters (weights and biases) during the training process to minimize the loss. This process is what allows the model to learn from data.
+
+
+Given our predicted probabilities and the true labels, the gradient for each class would be:
+
+- For the "mat" class (class 1): $\frac{\partial L}{\partial Z_{\text{mat}}} = P_{\text{mat}} - y_{\text{mat}} = 0.1 - 1 = -0.9$
+- For the "hat" class (class 2): $\frac{\partial L}{\partial Z_{\text{hat}}} = P_{\text{hat}} - y_{\text{hat}} = 0.1 - 0 = 0.1$
+- For the "bat" class (class 3): $\frac{\partial L}{\partial Z_{\text{bat}}} = P_{\text{bat}} - y_{\text{bat}} = 0.1 - 0 = 0.1$
+- For the "rat" class (class 4): $\frac{\partial L}{\partial Z_{\text{rat}}} = P_{\text{rat}} - y_{\text{rat}} = 0.7 - 0 = 0.7$
+
+These gradients tell us how much we need to adjust each logit to reduce the loss. A negative gradient for "mat" indicates that we need to increase the corresponding logit value to increase the probability of the correct class, while a positive gradient for the other classes indicates that we need to decrease those logit values to reduce their probabilities.
+
 
 ## Supplemental Information
 
@@ -1891,57 +1984,6 @@ where $V$ is the size of the vocabulary, $y_i$ is the one-hot encoding of the tr
 
 In training LLMs, cross-entropy loss is pivotal in guiding the model to adjust its internal parameters. By minimizing this loss, a model learns to increase the probability it assigns to the actual next token and decrease the probabilities of all other tokens, thus aligning the predicted distribution closer to the true distribution, token by token. This is key to generating text that closely follows the human language patterns.
 
-Let's look at a concrete example:
-
-Sure, let's consider a simple example involving a language model that is training to predict the next word in a sentence. Let's say our model's current task is to predict the word following "The cat sat on the ___."
-
-For simplicity, imagine our model's vocabulary only consists of four words: {mat, hat, bat, rat}, each represented by a one-hot encoded vector:
-
-- mat: [1, 0, 0, 0]
-- hat: [0, 1, 0, 0]
-- bat: [0, 0, 1, 0]
-- rat: [0, 0, 0, 1]
-
-The true next word in our training example is "mat", so the true probability distribution (one-hot encoded) for this example is:
-
-$$ y = [1, 0, 0, 0] $$
-
-Now, let's say our model predicts the probabilities for each word as follows:
-
-- mat: 0.7 (model's confidence that the next word is "mat")
-- hat: 0.1
-- bat: 0.1
-- rat: 0.1
-
-The predicted probability distribution is:
-
-$$ P = [0.7, 0.1, 0.1, 0.1] $$
-
-We then calculate the cross-entropy loss for this single example as:
-
-$$
-L = -\sum_{i=1}^4 y_i \log(p_i) \\
-L = -(1 \cdot \log(0.7) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1)) \\
-L = -(\log(0.7)) \\
-L \approx 0.357
-$$
-
-In this case, the loss is relatively low because the model's prediction was quite close to the true distribution, with a high probability assigned to the correct word "mat".
-
-If the model were very wrong, say it predicted:
-
-$$ P = [0.1, 0.1, 0.1, 0.7] $$
-
-The cross-entropy loss would then be:
-
-$$
-L = -\sum_{i=1}^4 y_i \log(p_i) \\
-L = -(1 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.7)) \\
-L = -(\log(0.1)) \\
-L \approx 2.303
-$$
-
-The loss is now much higher, reflecting the poor quality of the prediction. By backpropagating this loss and updating the model's weights accordingly, the model is trained to make better predictions over time.
 
 You can verify this yourself with this Python code:
 
