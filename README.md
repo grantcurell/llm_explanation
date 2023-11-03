@@ -32,7 +32,7 @@
   - [Math for FFN](#math-for-ffn)
   - [Decoder Attention Heads](#decoder-attention-heads)
   - [Calculate Encoder-Decoder Output](#calculate-encoder-decoder-output)
-- [Random Mentions](#random-mentions)
+  - [What is Cross Entropy Loss](#what-is-cross-entropy-loss)
 
 
 
@@ -839,9 +839,33 @@ To get from the output of Decoder-2 to the words "de nada", you would have to fo
 
 In practice, especially during training, the process might involve more complexities like teacher forcing, beam search during inference, etc., to improve the quality of the translations. But the above steps are the basic ones to go from Decoder-2's output to the final translated words.
 
+And that's it, our transformer output is complete!
+
 ### Loss Function and Back-Propagation
 
-Ok, so we've talked through how we get output... but now how do we actually train?
+Ok, so we've talked through how we get output... but now how do we actually train? I struggled to decide how to write this because in reality this gets very complex. The [Deep Learning book](https://www.deeplearningbook.org/contents/ml.html) has an entire chapter dedicated to stochastic gradient descent. What I settled on is showing how we take the transformer output as described above and transform that to a probability distribution.
+
+Let's first go through the process in broad terms.
+
+1. **Cross-Entropy Loss Calculation**:
+The transformer generates logits, which are the outputs of the model's final linear layer before applying the softmax function. These logits represent the unnormalized log probabilities of each word in the model's vocabulary. We then apply the softmax function to the logits to obtain a probability distribution over the vocabulary (predicted probabilities). Cross-entropy loss is then calculated between the predicted probabilities and the true distribution, which is typically represented as a one-hot encoded vector indicating the true next word in the sequence. For more on cross-entropy loss see [the supplemental information on it](#what-is-cross-entropy-loss)
+
+2. **Gradient Computation**:
+To improve the model, we need to know how to adjust the parameters to reduce the loss. This is done by computing the gradient of the loss with respect to each parameter. In the context of a transformer, this means calculating the derivatives of the loss with respect to each element in the weight matrices and biases throughout the network. The gradients indicate the direction in which we should adjust our parameters to reduce the loss; a positive gradient suggests that increasing the parameter would increase the loss, while a negative gradient suggests that increasing the parameter would decrease the loss.
+
+3. **Weight Update**:
+Once we have the gradients, we use them to update the model’s weights. This is done by subtracting a fraction of the gradient from the current weights. This fraction is determined by the learning rate—a hyperparameter that controls how big a step we take during optimization.
+
+4. **Backpropagation Through Time (BPTT)**:
+Because transformers process sequences, we need to consider not just the immediate outputs but also how a change in weights affects the subsequent parts of the sequence. Backpropagation through time is a method of applying the chain rule to unroll the sequence and calculate the impact of weights on loss at each time step.
+
+5. **Iteration and Convergence**:
+This entire process is repeated for many iterations—each iteration is an opportunity to adjust the weights slightly to reduce the loss. Over many iterations, this process is designed to converge on a set of weights that minimizes the loss, making the model's predictions as accurate as possible.
+
+6. **Regularization and Optimization Techniques**:
+In practice, additional techniques such as dropout, layer normalization, and advanced optimizers like Adam or RMSprop are used to improve training stability, avoid overfitting, and ensure that the optimization process converges efficiently.
+
+Each of these steps is carefully monitored using validation sets to ensure that the model is learning generalizable patterns and not just memorizing the training data.
 
 ## Supplemental Information
 
@@ -1843,6 +1867,110 @@ Attention Output:
  [-1.7888543  1.7888543  0.         0.       ]]
 ```
 
-## Random Mentions
+### What is Cross Entropy Loss
 
-- Embedding Size — width of the embedding vector (we use a width of 6 in our example). This dimension is carried forward throughout the Transformer model and hence is sometimes referred to by other names like ‘model size’ etc.
+Cross-entropy loss in the context of LLMs such as transformers is a measure of the difference between the model's predicted probability distribution over the vocabulary and the true distribution, typically represented as a one-hot encoded vector for the actual next token in the sequence.
+
+For a single prediction, it's calculated as:
+
+$$ L = -\sum_{i=1}^V y_i \log(p_i) $$
+
+where $V$ is the size of the vocabulary, $y_i$ is the one-hot encoding of the true token (1 for the true token and 0 for all others), and $p_i$ is the predicted probability of the $i$-th token.
+
+**Why Do We Use It?**
+
+1. **Comparing Probability Distributions**: Cross-entropy is inherently a measure for comparing two probability distributions, making it well-suited for tasks where the output is a set of probabilities—such as predicting the next token in a sequence.
+
+2. **Gradient Optimization**: It enables efficient training of neural networks through gradient-based optimization techniques. In LLMs, the gradients can be efficiently computed for backpropagation to adjust the model's parameters.
+
+3. **Logarithmic Scaling**: This feature of cross-entropy provides a natural and strong gradient signal for learning, which is especially important for models dealing with a large output space, such as the vocabularies in LLMs.
+
+4. **Direct Feedback for Probability Prediction**: Cross-entropy directly penalizes the model based on how divergent its probability predictions are from the actual distribution, which in the case of LLMs is crucial for generating coherent text sequences.
+
+5. **Information Theoretic Interpretation**: It stems from information theory, where it measures the number of extra bits needed due to the inefficiency of assuming the predicted distribution instead of the true distribution.
+
+In training LLMs, cross-entropy loss is pivotal in guiding the model to adjust its internal parameters. By minimizing this loss, a model learns to increase the probability it assigns to the actual next token and decrease the probabilities of all other tokens, thus aligning the predicted distribution closer to the true distribution, token by token. This is key to generating text that closely follows the human language patterns.
+
+Let's look at a concrete example:
+
+Sure, let's consider a simple example involving a language model that is training to predict the next word in a sentence. Let's say our model's current task is to predict the word following "The cat sat on the ___."
+
+For simplicity, imagine our model's vocabulary only consists of four words: {mat, hat, bat, rat}, each represented by a one-hot encoded vector:
+
+- mat: [1, 0, 0, 0]
+- hat: [0, 1, 0, 0]
+- bat: [0, 0, 1, 0]
+- rat: [0, 0, 0, 1]
+
+The true next word in our training example is "mat", so the true probability distribution (one-hot encoded) for this example is:
+
+$$ y = [1, 0, 0, 0] $$
+
+Now, let's say our model predicts the probabilities for each word as follows:
+
+- mat: 0.7 (model's confidence that the next word is "mat")
+- hat: 0.1
+- bat: 0.1
+- rat: 0.1
+
+The predicted probability distribution is:
+
+$$ P = [0.7, 0.1, 0.1, 0.1] $$
+
+We then calculate the cross-entropy loss for this single example as:
+
+$$
+L = -\sum_{i=1}^4 y_i \log(p_i) \\
+L = -(1 \cdot \log(0.7) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1)) \\
+L = -(\log(0.7)) \\
+L \approx 0.357
+$$
+
+In this case, the loss is relatively low because the model's prediction was quite close to the true distribution, with a high probability assigned to the correct word "mat".
+
+If the model were very wrong, say it predicted:
+
+$$ P = [0.1, 0.1, 0.1, 0.7] $$
+
+The cross-entropy loss would then be:
+
+$$
+L = -\sum_{i=1}^4 y_i \log(p_i) \\
+L = -(1 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.1) + 0 \cdot \log(0.7)) \\
+L = -(\log(0.1)) \\
+L \approx 2.303
+$$
+
+The loss is now much higher, reflecting the poor quality of the prediction. By backpropagating this loss and updating the model's weights accordingly, the model is trained to make better predictions over time.
+
+You can verify this yourself with this Python code:
+
+```python
+import numpy as np
+
+# True label
+y_true = np.array([1, 0, 0, 0])  # The correct word is 'mat'
+
+# Predictions
+predictions_1 = np.array([0.7, 0.1, 0.1, 0.1])  # Model's prediction is good
+predictions_2 = np.array([0.1, 0.1, 0.1, 0.7])  # Model's prediction is poor
+
+# Function to calculate cross-entropy loss
+def cross_entropy(y_true, predictions):
+    return -np.sum(y_true * np.log(predictions))
+
+# Calculate loss
+loss_1 = cross_entropy(y_true, predictions_1)
+loss_2 = cross_entropy(y_true, predictions_2)
+
+print(f"Loss for first prediction: {loss_1:.3f}")
+print(f"Loss for second prediction: {loss_2:.3f}")
+
+```
+
+Output:
+
+```
+Loss for first prediction: 0.357
+Loss for second prediction: 2.303
+```
