@@ -31,6 +31,7 @@
     - [Using Rectified Linear Units (ReLU)](#using-rectified-linear-units-relu)
   - [Math for FFN](#math-for-ffn)
   - [Decoder Attention Heads](#decoder-attention-heads)
+  - [Calculate Encoder-Decoder Output](#calculate-encoder-decoder-output)
 - [Random Mentions](#random-mentions)
 
 
@@ -351,7 +352,7 @@ $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) \times V
 $$
 
-    - This formula captures the essence of the self-attention mechanism. The product of Q and $K^T$ gives attention scores, which after scaling and softmax, are used to weigh the V values.
+  - This formula captures the essence of the self-attention mechanism. The product of Q and $K^T$ gives attention scores, which after scaling and softmax, are used to weigh the V values.
 
 ##### A Concrete Example
 
@@ -751,14 +752,96 @@ Likewise, the math for layer normalization remains the same as it was [for the i
 
 $$\text{LN}(x_o) = \begin{pmatrix} -0.46049196 & -1.4140849 & 0.81224991 & 1.06232694 \\\ -0.46121408 & -1.41736871 & 0.85625689 & 1.02232591 \\\ -0.46146504 & -1.41536061 & 0.83223948 & 1.04458616 \end{pmatrix}$$
 
+**Attention Masking** One thing I don't describe here that [the article](https://towardsdatascience.com/transformers-explained-visually-part-2-how-it-works-step-by-step-b49fa4a64f34) does describe is attention masking. Recall how at [the beginning](#input-embedding-you-are-welcome) we had start padding? We *do not* want our model to pay attention to that start padding so we actually mask that out. We also mask out future characters in the decode process because remember, we've given the decoder exactly the right answer. We don't want it to look ahead at the answer and guess it exactly, we want it to try to guess it. So we also mask out future words at each stage of the process. I have done that [in the Python code](#decoder-attention-heads) but I haven't gone through the math here.
+
 ### Decoder Stack Processing with Encoder Output
 
 The [same post](https://towardsdatascience.com/transformers-explained-visually-part-3-multi-head-attention-deep-dive-1c1ff1024853) describes the encoder-decoder attention block.
 
 > The Encoder-Decoder Attention takes its input from two sources. Therefore, unlike the Encoder Self-Attention, which computes the interaction between each input word with other input words, and Decoder Self-Attention which computes the interaction between each target word with other target words, the Encoder-Decoder Attention computes the interaction between each target word with each input word.
 
+So what does that look like:
+
+1. **Compute the Queries (Q) from the Decoder's Output**:
+   For the encoder-decoder attention, the queries are derived from the decoder, while the keys and values are derived from the encoder.
+
+   Using the decoder's output $\text{LN}(x_o)$ and the decoder's weight matrix $W_Q$:
+
+$$
+Q = \text{LN}(x_o) \times W_Q
+$$
+
+2. **Compute the Keys (K) and Values (V) from the Encoder's Output**:
+   Using the encoder's output and the encoder's weight matrices $W_K$ and $W_V$:
+
+$$
+K = \text{LN}(x_e) \times W_K
+$$
+
+$$
+V = \text{LN}(x_e) \times W_V
+$$
+
+3. **Compute the Attention Scores**:
+   This is done by multiplying the queries and keys, and then dividing by the square root of the depth of the keys (in this case, the number of columns in our matrices, which is 4):
+
+$$
+\text{Scores} = \frac{Q \times K^T}{\sqrt{4}}
+$$
+
+4. **Apply Masking**:
+   As with before we need to mask out future words.
+
+5. **Compute the Attention Weights**:
+
+$$
+\text{Attention Weights} = \text{Softmax}(\text{Scores})
+$$
+
+6. **Compute the Output of the Attention Mechanism**:
+   This is done by multiplying the attention weights with the values:
+
+$$
+\text{Attention Output} = \text{Attention Weights} \times V
+$$
+
+Putting that [all into Python](#calculate-encoder-decoder-output) you get:
+
+$$\begin{pmatrix} -1.7888543 & 1.7888543 & 0. & 0. \\\ -1.7888543 & 1.7888543 & 0. & 0. \\\ -1.7888543 & 1.7888543 & 0. & 0. \end{pmatrix}$$
+
+Since this is a toy example the values are effectively nonsense.
+
 ### Output Layer for Word Probabilities
+
+With this output you would then do the following:
+
+To get from the output of Decoder-2 to the words "de nada", you would have to follow several steps, based on the provided diagram:
+
+1. **Linear Transformation**: 
+   The output of Decoder-2 is passed through a linear layer. This involves multiplying the output by a learned weight matrix. The purpose of this step is to transform the output dimensions to match the size of the vocabulary.
+
+   Suppose your vocabulary has $V$ words. The weight matrix for the linear layer will have dimensions suitable to project the decoder's output into a shape like `(sequence_length, V)`, where `sequence_length` is the number of words/tokens in the output sequence.
+
+   For simplicity, let's assume you have a small vocabulary of 10,000 words (including "de" and "nada"). The transformation will convert the 4-dimensional output of each sequence element into a 10,000-dimensional vector.
+
+2. **Softmax Activation**:
+   After the linear transformation, the output values are passed through a softmax function to convert them into probabilities. The softmax function ensures that the values are between 0 and 1 and that they sum to 1 across the vocabulary for each sequence position.
+
+   This will give you a probability distribution over all words in the vocabulary for each position in the output sequence.
+
+3. **Selecting the Word**:
+   For each position in the output sequence, you would pick the word in the vocabulary with the highest probability. This is often done using an `argmax` function. 
+
+   So, for the first position, if the word "de" has the highest probability, it's selected. For the second position, if "nada" has the highest probability, it's selected, and so on.
+
+4. **Final Output**:
+   Concatenate the chosen words together based on their sequence position to get the final output, which in this case would be "de nada".
+
+In practice, especially during training, the process might involve more complexities like teacher forcing, beam search during inference, etc., to improve the quality of the translations. But the above steps are the basic ones to go from Decoder-2's output to the final translated words.
+
 ### Loss Function and Back-Propagation
+
+Ok, so we've talked through how we get output... but now how do we actually train?
 
 ## Supplemental Information
 
@@ -1669,6 +1752,95 @@ Layer Normalized Output:
 [[-0.46049196 -1.4140849   0.81224991  1.06232694]
  [-0.46121408 -1.41736871  0.85625689  1.02232591]
  [-0.46146504 -1.41536061  0.83223948  1.04458616]]
+```
+
+### Calculate Encoder-Decoder Output
+
+```python
+import numpy as np
+
+# Encoder Output
+Encoder_Output = np.array([
+    [-1.34164072, -0.44721357, 0.44721357, 1.34164072],
+    [-1.34164071, -0.44721357, 0.44721357, 1.34164071],
+    [-1.34164075, -0.44721358, 0.44721358, 1.34164075]
+])
+
+# Decoder Output
+Decoder_Output = np.array([
+    [-0.46049196, -1.4140849, 0.81224991, 1.06232694],
+    [-0.46121408, -1.41736871, 0.85625689, 1.02232591],
+    [-0.46146504, -1.41536061, 0.83223948, 1.04458616]
+])
+
+# Encoder Weights
+W_Q_enc = np.array([
+    [1, 0, 0, 1],
+    [0, 1, 1, 0],
+    [0, 1, 0, 1],
+    [1, 0, 1, 0]
+])
+W_K_enc = np.array([
+    [0, 1, 1, 0],
+    [1, 0, 0, 1],
+    [1, 0, 1, 0],
+    [0, 1, 0, 1]
+])
+W_V_enc = np.array([
+    [1, 1, 0, 0],
+    [0, 0, 1, 1],
+    [0, 1, 1, 0],
+    [1, 0, 0, 1]
+])
+
+# Decoder Weights
+W_Q_dec = np.array([
+    [1, 0, 0, 1],
+    [0, 1, 1, 0],
+    [0, 1, 0, 1],
+    [1, 0, 1, 0]
+])
+
+# Compute Queries, Keys, and Values for Encoder
+Q_enc = Encoder_Output.dot(W_Q_enc.T)
+K_enc = Encoder_Output.dot(W_K_enc.T)
+V_enc = Encoder_Output.dot(W_V_enc.T)
+
+# Compute Queries for Decoder
+Q_dec = Decoder_Output.dot(W_Q_dec.T)
+
+# Attention Scores
+Scores = Q_dec.dot(K_enc.T) / np.sqrt(3)
+
+def softmax(x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=-1, keepdims=True)
+
+# Compute attention weights
+Attention_Weights = softmax(Scores)
+
+# Compute Weighted sum of Values
+Attention_Output = Attention_Weights.dot(V_enc)
+
+print("Attention Weights:")
+print(Attention_Weights)
+print("\nAttention Output:")
+print(Attention_Output)
+
+```
+
+Output:
+
+```
+Attention Weights:
+[[0.33333333 0.33333333 0.33333334]
+ [0.33333333 0.33333333 0.33333334]
+ [0.33333333 0.33333333 0.33333334]]
+
+Attention Output:
+[[-1.7888543  1.7888543  0.         0.       ]
+ [-1.7888543  1.7888543  0.         0.       ]
+ [-1.7888543  1.7888543  0.         0.       ]]
 ```
 
 ## Random Mentions
