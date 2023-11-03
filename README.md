@@ -17,6 +17,15 @@
   - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
   - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
 - [Generative Pre-Trained Transformer (GPT)](#generative-pre-trained-transformer-gpt)
+  - [What's so different about GPT models?](#whats-so-different-about-gpt-models)
+  - [Going Through an Example](#going-through-an-example)
+    - [Input Representation:](#input-representation)
+    - [Embedding and Positional Encoding:](#embedding-and-positional-encoding)
+    - [Masked Self-Attention:](#masked-self-attention)
+    - [Feed Forward and Layer Norm:](#feed-forward-and-layer-norm)
+    - [Output](#output)
+  - [Training](#training)
+  - [GPT Time Complexity](#gpt-time-complexity)
 - [Supplemental Information](#supplemental-information)
   - [Word Embeddings](#word-embeddings)
   - [Weight Matrices](#weight-matrices)
@@ -36,11 +45,15 @@
   - [What is Cross Entropy Loss](#what-is-cross-entropy-loss)
 
 
-
-
 ## Overview
 
-The purpose of this whitepaper is to explain at a medium to low level how LLMs work such that we can make informed decisions about their performance and architectural decisions.
+The purpose of this whitepaper is to explain at a low level how LLMs work such that we can make informed decisions about their performance and architectural decisions.
+
+It draws on the following as sources
+
+- [GPT: Origin, Theory, Application, and Future](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=14)
+- [The Deep Learning Book](https://www.deeplearningbook.org/)
+- [Transformers Explained Visually](https://towardsdatascience.com/transformers-explained-visually-part-1-overview-of-functionality-95a6dd460452)
 
 ## How Transformers Work
 
@@ -1075,7 +1088,121 @@ With all of that learned, we are finally ready to go to the main event - GPT.
 
 ## Generative Pre-Trained Transformer (GPT)
 
+### What's so different about GPT models?
 
+The most obvious problem with the above is the same problem everyone has... you have to have training data. Creating training data is tedious, error prone, and generally miserable.
+
+So what makes GPT models special? They work on **unlabeled** text. You can point them at a huge corpus of text and they can train themselves. Even better, you can feed in labeled data to enhance a GPT model for domain-specific tasks. As [Troy Wang points out though](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=17)
+
+> In fact, in the case of GPT3 (the third generation of GPT), its parameters and training corpus are so large, and its task-agnostic performance is so good, such that fine-tuning is no longer essential. Instead, providing a few examples in the input prompt, which is also called few-shots in-context learning, is sufficient for most tasks [BMR+20].
+
+I'll also cite him again to describe the next big point:
+
+> Another architectural difference between GPT and traditional transformers is that instead of
+relying on both encoders and decoders, GPT gets rid of the encoders and instead derives its
+performance from stacking many decoders. Additionally, the sheer scale of GPT models is
+groundbreaking in itself. GPT models have exponentially more parameters and use exponentially
+larger training sets than the original transformer model. The original version of GPT comes with
+150 million parameters [RNS+18]. GPT2 has 1.5 billion parameters, while GPT3, the latest version
+of the GPT series models, has a mind blowing 175 billion parameters [RWC+19] [BMR+20].
+
+This is what the GPT model in contrast to what we saw in the original transformer.
+
+![](images/2023-11-02-22-55-13.png)
+
+[Source Image](https://www.cis.upenn.edu/wp-content/uploads/2021/10/Tianzheng_Troy_Wang_CIS498EAS499_Submission.pdf#page=18)
+
+### Going Through an Example
+
+#### Input Representation:
+
+Suppose we have a sentence: "I love AI," which we tokenize as $["I", "love", "AI"]$. Here are our randomly selected embeddings:
+$$ U = \{ \text{"I"}: [0.12, 0.87], \text{"love"}: [0.56, 0.32], \text{"AI"}: [0.74, 0.51] \} $$
+
+For our positional encoding matrix \(W_p\), we use:
+
+$$ W_p = \left[ 0.02, 0.04, 0.03, 0.07, 0.05, 0.09 \right] $$
+
+#### Embedding and Positional Encoding:
+
+Combining our embeddings with our positional encodings, we get:
+
+$$ h_0 = U + W_p $$
+
+For "I":
+
+$$ h_0(\text{"I"}) = \left[ 0.14, 0.91 \right] $$
+
+For "love":
+
+$$ h_0(\text{"love"}) = \left[ 0.59, 0.39 \right] $$
+
+For "AI":
+
+$$ h_0(\text{"AI"}) = \left[ 0.79, 0.60 \right] $$
+
+#### Masked Self-Attention:
+
+The math for the self attention mechanism remain the same as they were in [this section](#self-attention)
+
+Suppose for our masked self-attention, the attention weights (for the word "love") give 0.1 importance to the word "I" and 0.9 to itself. The word "AI" hasn't appeared yet, so it gets 0 importance.
+Hence, the attention output for "love" will be:
+
+$$ h_1(\text{"love"}) = 0.1 \times h_0(\text{"I"}) + 0.9 \times h_0(\text{"love"}) = \left[ 0.155, 0.458 \right] $$
+
+#### Feed Forward and Layer Norm:
+
+Let's use a simplified feed-forward mechanism. Assuming a linear transformation with a weight matrix \(W\):
+
+$$ W = \left[ 0.2, 0.3, 0.4, 0.5 \right] $$
+
+The output for the word "love" will be:
+
+$$ h_2(\text{"love"}) = h_1(\text{"love"}) \times W = \left[ 0.1753, 0.309 \right] $$
+
+#### Output
+
+This remains the same [as before](#output-layer-for-word-probabilities).
+
+### Training
+
+1. **Model Objective:** 
+   The primary goal during pre-training is to maximize the likelihood of a particular token given its preceding tokens. For a model being trained, it tries to predict the next word in a sequence using the context provided by the preceding words.
+
+2. **Context Window:** 
+   In the "roses are red" example from the passage, the context window is two words. Similarly, for "I love AI," if we were to use a context window of two words, the model would be given "I love" and would try to predict "AI."
+
+3. **Tokenizing and Embeddings:** 
+   The passage mentions breaking down input into embeddings. In the case of "I love AI," the words "I," "love," and "AI" are tokenized and then converted into dense vectors or embeddings. These embeddings capture semantic meanings and relationships between words.
+
+4. **Maximizing Likelihood:** 
+   As the formula \( L_1(U) = \Sigma_i \log P(u_i|u_{i-k}, ..., u_{i-1}) \) suggests, the model tries to maximize the probability (or likelihood) of observing the token \( u_i \) given its previous k tokens. For our example "I love AI," if you feed "I love" into the model, it should assign a high probability to "AI" being the next word, assuming "I love AI" is a frequent phrase in the training data.
+
+5. **Unsupervised Nature:** 
+   The term "unsupervised" implies that there's no explicit label provided to the model for training. Instead, the model uses the context (preceding words) as input and tries to predict the next word. The correct answer (or "label") is just the next word in the sequence. So, the data itself provides both the input and the "label."
+
+### GPT Time Complexity
+
+1. Self-Attention Mechanism:
+The self-attention mechanism calculates attention scores between each pair of tokens in the input. Thus, if you have an input sequence of length $n$, you'd need to compute scores for every pair, leading to $n^2$ pairwise computations.
+
+2. Matrix Multiplication:
+For each of the pairwise computations, we perform matrix multiplication with the Query, Key, and Value matrices. If $d$ represents the dimensionality of the embeddings (or the size of the model), then this matrix multiplication step has a time complexity of $O(d)$.
+
+3. Aggregating Time Complexity:
+Taking both of the above steps into account, the overall time complexity for the self-attention mechanism becomes $O(n^2 \times d)$.
+
+4. Number of Layers:
+GPT models, like all transformer-based models, consist of multiple layers (blocks). If $l$ is the number of layers, then the time complexity considering all layers becomes $O(l \times n^2 \times d)$.
+
+5. Other Components:
+Apart from the self-attention mechanism, there are feed-forward neural networks and layer normalization in each layer of the transformer. However, the operations associated with these components are linear with respect to the sequence length and do not significantly alter the quadratic nature of the transformer's time complexity.
+
+The primary bottleneck in terms of time complexity for GPT models is the self-attention mechanism, which has a time complexity of the aforementioned $O(l \times n^2 \times d)$. The quadratic dependence on the sequence length $n$ means that as the input gets longer, the time taken for computation increases quadratically. This is one of the reasons why there's usually a limit on the maximum sequence length that transformer models can handle.
+
+It's also worth noting that while the theoretical time complexity gives us an understanding of how computation grows with the size of input and model, in practice, optimizations, hardware accelerations, and efficient implementations will have a huge impact on the performance of the model.
+
+To provide a rough order of magnitude, GPT3 has 175 layers and d is often set to a value like 1024 in a large model.
 
 ## Supplemental Information
 
