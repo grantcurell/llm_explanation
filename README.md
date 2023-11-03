@@ -16,6 +16,7 @@
   - [Decoder Stack Processing with Encoder Output](#decoder-stack-processing-with-encoder-output)
   - [Output Layer for Word Probabilities](#output-layer-for-word-probabilities)
   - [Loss Function and Back-Propagation](#loss-function-and-back-propagation)
+- [Generative Pre-Trained Transformer (GPT)](#generative-pre-trained-transformer-gpt)
 - [Supplemental Information](#supplemental-information)
   - [Word Embeddings](#word-embeddings)
   - [Weight Matrices](#weight-matrices)
@@ -949,7 +950,6 @@ Here's what's being differentiated:
 
 When we differentiate $L$ with respect to $Z_i$, we are calculating how a small change in the logit $Z_i$ for any class $i$ will affect the overall loss $L$. This gradient is crucial because it provides the information needed to adjust the model parameters (weights and biases) during the training process to minimize the loss. This process is what allows the model to learn from data.
 
-
 Given our predicted probabilities and the true labels, the gradient for each class would be:
 
 - For the "mat" class (class 1): $\frac{\partial L}{\partial Z_{\text{mat}}} = P_{\text{mat}} - y_{\text{mat}} = 0.1 - 1 = -0.9$
@@ -958,6 +958,123 @@ Given our predicted probabilities and the true labels, the gradient for each cla
 - For the "rat" class (class 4): $\frac{\partial L}{\partial Z_{\text{rat}}} = P_{\text{rat}} - y_{\text{rat}} = 0.7 - 0 = 0.7$
 
 These gradients tell us how much we need to adjust each logit to reduce the loss. A negative gradient for "mat" indicates that we need to increase the corresponding logit value to increase the probability of the correct class, while a positive gradient for the other classes indicates that we need to decrease those logit values to reduce their probabilities.
+
+The gradient values indicate the direction and magnitude of change needed to reduce the loss with respect to each class's logit (unnormalized log probabilities before softmax).
+
+- For the "mat" class (class 1): $\frac{\partial L}{\partial Z_{\text{mat}}} = -0.9$
+  - The true class was "mat" (since $y_{\text{mat}} = 1$), but the model predicted a low probability (0.1). The negative gradient (-0.9) indicates the model should increase the logit for "mat" to increase its probability upon the next iteration.
+  
+- For the "hat" class (class 2): $\frac{\partial L}{\partial Z_{\text{hat}}} = 0.1$
+  - The model incorrectly assigned a small probability to "hat", which wasn't the true class. The positive gradient suggests the model should decrease the logit for "hat" to reduce its probability next time.
+  
+- For the "bat" class (class 3): $\frac{\partial L}{\partial Z_{\text{bat}}} = 0.1$
+  - Similar to "hat", "bat" is not the true class, and it also received a small probability. Again, the model should decrease the logit for "bat".
+  
+- For the "rat" class (class 4): $\frac{\partial L}{\partial Z_{\text{rat}}} = 0.7$
+  - "Rat" is not the true class, but the model assigned it a high probability (0.7). The large positive gradient value indicates a strong need to decrease the logit for "rat" to correct this error.
+
+In essence, the gradient tells you how to tweak the logits to reduce the loss in the next training step:
+- **Negative gradients** imply an increase in the respective logit value is needed (to increase the probability of the true class).
+- **Positive gradients** imply a decrease in the respective logit value is needed (to reduce the probability of incorrect classes).
+
+So now we take that information and use it to update the weights:
+
+**Gradient Descent Step**: The weights $W$ are updated by subtracting the product of the learning rate $\alpha$ and the gradient:
+
+$$
+W_i = W_i - \alpha \cdot \frac{\partial L}{\partial Z_i}
+$$
+
+where $W_i$ is the weight corresponding to class $i$ and the learning rate is a hyperparameter.
+
+So for our example you would get:
+
+$$
+Z[0] = Z[0] - 0.1 \times (-0.9) \\
+Z[1] = Z[1] - 0.1 \times 0.1 \\
+Z[2] = Z[2] - 0.1 \times 0.1 \\
+Z[3] = Z[3] - 0.1 \times 0.7
+$$
+
+Given a learning rate $\alpha = 0.1$, the updated probabilities after one iteration would be:
+
+1. For the "mat" class, since the gradient was -0.9:  
+   $P_{\text{mat}} = 0.1 + 0.1 \times 0.9 = 0.1 + 0.09 = 0.19$
+
+2. For the "hat", "bat", and "rat" classes, since the gradients were 0.1 and 0.7 respectively:  
+   $P_{\text{hat}} = P_{\text{bat}} = 0.1 - 0.1 \times 0.1 = 0.1 - 0.01 = 0.09$  
+   $P_{\text{rat}} = 0.7 - 0.1 \times 0.7 = 0.7 - 0.07 = 0.63$
+
+After the first update, the probabilities would be:
+- $P_{\text{mat}} = 0.19$
+- $P_{\text{hat}} = P_{\text{bat}} = 0.09$
+- $P_{\text{rat}} = 0.63$
+
+However, we need to re-normalize these probabilities because they won't sum up to 1 after the update. This is usually done by passing the updated weights $Z$ through a softmax function to get the new probabilities $P$. If we were working with the logits $Z$ directly, we would subtract the gradients scaled by the learning rate from the logits, and then apply the softmax to get the next set of probabilities.
+
+Here is a Python script which performs the work:
+
+```python
+import numpy as np
+
+# Define the initial weights
+weights = np.array([0.1, 0.1, 0.1, 0.7])
+
+# True class index
+true_class = 0
+
+# Define the learning rate
+learning_rate = 0.01
+
+# Number of iterations
+iterations = 2000
+
+# Apply gradient descent
+for i in range(iterations):
+    # Compute the probabilities using softmax
+    # Softmax formula: P(class_i) = e^(Z_i) / sum(e^(Z_j) for j in classes)
+    exp_weights = np.exp(weights)
+    probabilities = exp_weights / np.sum(exp_weights)
+
+    # Compute the gradient for each class
+    # Gradient for true class: (P(class_i) - 1)
+    # Gradient for other classes: P(class_i)
+    gradients = probabilities.copy()
+    gradients[true_class] -= 1
+
+    # Update the weights with the gradients
+    # Weight update formula: W_i = W_i - learning_rate * gradient_i
+    weights -= learning_rate * gradients
+
+    # Print the weights and probabilities at each 10th step
+    if i % 10 == 0:
+        print(f"Iteration {i}: Weights: {weights}")
+        print(f"Iteration {i}: Probabilities: {probabilities}")
+
+# Calculate final probabilities using the updated weights
+final_probabilities = np.exp(weights) / np.sum(np.exp(weights))
+print("\nFinal probabilities: ", final_probabilities)
+
+```
+
+Here is what the ouput looks like:
+
+```
+Iteration 0: Weights: [0.10792622 0.09792622 0.09792622 0.69622133]
+Iteration 0: Probabilities: [0.20737772 0.20737772 0.20737772 0.37786684]
+...SNIP...
+Iteration 1990: Weights: [ 3.41207767 -0.86673008 -0.86673008 -0.6786175 ]
+Iteration 1990: Probabilities: [0.95742224 0.0132765  0.0132765  0.01602477]
+
+Final probabilities:  [0.95765298 0.01320591 0.01320591 0.0159352 ]
+```
+
+Now imagine that this is instead done over the totality of a language with a massive vocabulary instead of four words. That's what a real LLM is doing.
+
+With all of that learned, we are finally ready to go to the main event - GPT.
+
+## Generative Pre-Trained Transformer (GPT)
+
 
 
 ## Supplemental Information
