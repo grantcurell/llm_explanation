@@ -24,8 +24,8 @@
     - [Going Through an Example](#going-through-an-example)
       - [Input Representation:](#input-representation)
       - [Embedding and Positional Encoding:](#embedding-and-positional-encoding)
-      - [Masked Self-Attention:](#masked-self-attention)
-      - [Feed Forward and Layer Norm:](#feed-forward-and-layer-norm)
+      - [Masked Self-Attention](#masked-self-attention)
+      - [Feed Forward and Layer Norm](#feed-forward-and-layer-norm)
       - [Output](#output)
     - [Training](#training)
     - [GPT Time Complexity](#gpt-time-complexity)
@@ -1144,7 +1144,7 @@ For "AI":
 
 $$ h_0(\text{"AI"}) = \left[ 0.79, 0.60 \right] $$
 
-#### Masked Self-Attention:
+#### Masked Self-Attention
 
 The math for the self attention mechanism remain the same as they were in [this section](#self-attention)
 
@@ -1153,7 +1153,7 @@ Hence, the attention output for "love" will be:
 
 $$ h_1(\text{"love"}) = 0.1 \times h_0(\text{"I"}) + 0.9 \times h_0(\text{"love"}) = \left[ 0.155, 0.458 \right] $$
 
-#### Feed Forward and Layer Norm:
+#### Feed Forward and Layer Norm
 
 Let's use a simplified feed-forward mechanism. Assuming a linear transformation with a weight matrix \(W\):
 
@@ -1179,7 +1179,7 @@ This remains the same [as before](#output-layer-for-word-probabilities).
    The passage mentions breaking down input into embeddings. In the case of "I love AI," the words "I," "love," and "AI" are tokenized and then converted into dense vectors or embeddings. These embeddings capture semantic meanings and relationships between words.
 
 4. **Maximizing Likelihood:** 
-   As the formula \( L_1(U) = \Sigma_i \log P(u_i|u_{i-k}, ..., u_{i-1}) \) suggests, the model tries to maximize the probability (or likelihood) of observing the token \( u_i \) given its previous k tokens. For our example "I love AI," if you feed "I love" into the model, it should assign a high probability to "AI" being the next word, assuming "I love AI" is a frequent phrase in the training data.
+   As the formula $L_1(U) = \Sigma_i \log P(u_i|u_{i-k}, ..., u_{i-1})$ suggests, the model tries to maximize the probability (or likelihood) of observing the token $u_i$ given its previous k tokens. For our example "I love AI," if you feed "I love" into the model, it should assign a high probability to "AI" being the next word, assuming "I love AI" is a frequent phrase in the training data.
 
 5. **Unsupervised Nature:** 
    The term "unsupervised" implies that there's no explicit label provided to the model for training. Instead, the model uses the context (preceding words) as input and tries to predict the next word. The correct answer (or "label") is just the next word in the sequence. So, the data itself provides both the input and the "label."
